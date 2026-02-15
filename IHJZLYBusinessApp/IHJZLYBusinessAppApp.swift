@@ -1,17 +1,20 @@
-//
-//  IHJZLYBusinessAppApp.swift
-//  IHJZLYBusinessApp
-//
-//  Created by Mohamed Ali Benouarzeg on 6/2/2026.
-//
+// IHJZLYBusinessAppApp.swift
 
 import SwiftUI
 
 @main
 struct IHJZLYBusinessAppApp: App {
+    @StateObject private var appState = AppState()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if appState.isAuthenticated {
+                MainTabView()
+                    .environmentObject(appState)
+            } else {
+                AuthFlowView()
+                    .environmentObject(appState)
+            }
         }
     }
 }
