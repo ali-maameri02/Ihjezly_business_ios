@@ -4,12 +4,12 @@ import SwiftUI
 
 struct AppBarView: View {
     @StateObject private var viewModel = UserProfileViewModel()
+    @StateObject private var notificationsVM = NotificationsViewModel()
+    @State private var showNotifications = false
     
     var body: some View {
         HStack {
-            
             HStack(spacing: 12) {
-                
                 Image("ihjzlyapplogo")
                     .resizable()
                     .frame(width: 40, height: 40)
@@ -25,33 +25,39 @@ struct AppBarView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                
-              
             }
             Spacer()
             
-        
-            
-            ZStack {
-                Image(systemName: "bell.fill")
-                    .font(.title2)
-                    .foregroundColor(.gray)
-                if viewModel.currentUser != nil {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 16, height: 16)
-                        .offset(x: 8, y: -8)
-                    Text("1")
-                        .font(.caption2)
-                        .foregroundColor(.white)
-                        .offset(x: 8, y: -8)
+            Button(action: { 
+                showNotifications = true
+                notificationsVM.loadNotifications()
+            }) {
+                ZStack {
+                    Image(systemName: "bell.fill")
+                        .font(.title2)
+                        .foregroundColor(.gray)
+                    if notificationsVM.unreadCount > 0 {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 16, height: 16)
+                            .offset(x: 8, y: -8)
+                        Text("\(notificationsVM.unreadCount)")
+                            .font(.caption2)
+                            .foregroundColor(.white)
+                            .offset(x: 8, y: -8)
+                    }
                 }
+            }
+            .sheet(isPresented: $showNotifications) {
+                NotificationsView()
             }
         }
         .padding(.horizontal, 16)
         .frame(height: 80)
         .background(Color.white)
-//        .shadow(radius: 2)
         .environment(\.layoutDirection, .rightToLeft)
+        .onAppear {
+            notificationsVM.loadNotifications()
+        }
     }
 }

@@ -29,7 +29,9 @@ struct PropertyCreationFlow: View {
             switch currentStep {
             case 1:
                 Step1View(
-                    viewModel: Step1ViewModel(form: form, locationManager: locationUseCase, currentUser: currentUser),
+                    form: form,
+                    locationUseCase: locationUseCase,
+                    currentUser: currentUser,
                     onBack: nil,
                     onNext: { updatedForm in
                         form = updatedForm
@@ -40,7 +42,6 @@ struct PropertyCreationFlow: View {
             case 2:
                 Step2View(
                     form: form,
-                    onBack: { currentStep = 1 },
                     onNext: { location in
                         var updatedForm = form
                         updatedForm.location = location
@@ -53,7 +54,6 @@ struct PropertyCreationFlow: View {
                 Step3View(
                     form: form,
                     propertySubType: propertySubType,
-                    onBack: { currentStep = 2 },
                     onNext: { updatedForm in
                         form = updatedForm
                         currentStep = nextStepAfter3
@@ -64,7 +64,6 @@ struct PropertyCreationFlow: View {
                 if shouldShowClassification {
                     Step4View(
                         form: form,
-                        onBack: { currentStep = 3 },
                         onNext: { updatedForm in
                             form = updatedForm
                             currentStep = 5
@@ -73,7 +72,6 @@ struct PropertyCreationFlow: View {
                 } else {
                     Step5View(
                         form: form,
-                        onBack: { currentStep = 3 },
                         onNext: { updatedForm in
                             form = updatedForm
                             currentStep = 6
@@ -85,7 +83,6 @@ struct PropertyCreationFlow: View {
                 if shouldShowClassification {
                     Step5View(
                         form: form,
-                        onBack: { currentStep = 4 },
                         onNext: { updatedForm in
                             form = updatedForm
                             currentStep = 6
@@ -94,7 +91,6 @@ struct PropertyCreationFlow: View {
                 } else {
                     Step6View(
                         form: form,
-                        onBack: { currentStep = 4 },
                         onNext: { updatedForm in
                             form = updatedForm
                             currentStep = 7
@@ -115,7 +111,6 @@ struct PropertyCreationFlow: View {
                 } else {
                     Step6View(
                         form: form,
-                        onBack: { currentStep = 5 },
                         onNext: { updatedForm in
                             form = updatedForm
                             currentStep = 7
@@ -126,7 +121,6 @@ struct PropertyCreationFlow: View {
             case 7:
                 Step7View(
                     form: form,
-                    onBack: { currentStep = 6 },
                     onNext: { updatedForm in
                         form = updatedForm
                         submitForm()

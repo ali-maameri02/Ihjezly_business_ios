@@ -54,7 +54,7 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
             discount: form.discount > 0 ? Discount(value: form.discount) : nil,
             facilities: form.facilities,
             videoUrl: nil,
-//            unavailables: form,
+            unavailables: form.unavailableDates,
             businessOwnerId: currentUser.id,
             images: form.images
         )

@@ -66,6 +66,19 @@ enum Classification: String, Codable {
     case fiveStars = "FiveStars"
     case sixStars = "SixStars"
     case sevenStars = "SevenStars"
+    
+    var arabicName: String {
+        switch self {
+        case .none: return "بدون تصنيف"
+        case .oneStar: return "نجمة واحدة"
+        case .twoStars: return "نجمتين"
+        case .threeStars: return "ثلاث نجوم"
+        case .fourStars: return "أربع نجوم"
+        case .fiveStars: return "خمس نجوم"
+        case .sixStars: return "ست نجوم"
+        case .sevenStars: return "سبع نجوم"
+        }
+    }
 }
 
 

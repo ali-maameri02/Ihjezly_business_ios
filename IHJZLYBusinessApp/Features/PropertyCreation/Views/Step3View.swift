@@ -74,8 +74,8 @@ struct Step3View<FormData: PropertyForm>: View {
                 ForEach(hotelRoomTypes, id: \.title) { item in
                     RoomTypeOption(
                         title: item.title,
-                        isSelected: viewModel.selectedHotelRoomType == item.type,
-                        onSelect: { viewModel.selectedHotelRoomType = item.type }
+                        isSelected: viewModel.selectedHotelRoomType == item.roomType,
+                        onSelect: { viewModel.selectedHotelRoomType = item.roomType }
                     )
                 }
                 
@@ -83,8 +83,8 @@ struct Step3View<FormData: PropertyForm>: View {
                 ForEach(apartmentTypes, id: \.title) { item in
                     RoomTypeOption(
                         title: item.title,
-                        isSelected: viewModel.selectedApartmentType == item.type,
-                        onSelect: { viewModel.selectedApartmentType = item.type }
+                        isSelected: viewModel.selectedApartmentType == item.apartmentType,
+                        onSelect: { viewModel.selectedApartmentType = item.apartmentType }
                     )
                 }
                 
@@ -103,26 +103,31 @@ struct Step3View<FormData: PropertyForm>: View {
     }
 }
 
+private struct HotelRoomTypeItem {
+    let title: String
+    let roomType: HotelRoomType
+}
+
+private struct ApartmentTypeItem {
+    let title: String
+    let apartmentType: ApartmentType
+}
+
 private let hotelRoomTypes = [
-    RoomTypeItem(title: "غرفة فردية", type: HotelRoomType.singleRoom),
-    RoomTypeItem(title: "غرفة زوجية بسرير واحد", type: HotelRoomType.twinRoomOneBed),
-    RoomTypeItem(title: "غرفة زوجية بسريرين", type: HotelRoomType.twinRoomTwoBeds),
-    RoomTypeItem(title: "جناح", type: HotelRoomType.suite),
-    RoomTypeItem(title: "غرفة ثلاثية", type: HotelRoomType.tripleRoom),
-    RoomTypeItem(title: "غرفة رباعية", type: HotelRoomType.quadrupleRoom),
-    RoomTypeItem(title: "جناح وزاري", type: HotelRoomType.ministerialSuite),
-    RoomTypeItem(title: "جناح رئاسي", type: HotelRoomType.presidentialSuite)
+    HotelRoomTypeItem(title: "غرفة فردية", roomType: .singleRoom),
+    HotelRoomTypeItem(title: "غرفة زوجية بسرير واحد", roomType: .twinRoomOneBed),
+    HotelRoomTypeItem(title: "غرفة زوجية بسريرين", roomType: .twinRoomTwoBeds),
+    HotelRoomTypeItem(title: "جناح", roomType: .suite),
+    HotelRoomTypeItem(title: "غرفة ثلاثية", roomType: .tripleRoom),
+    HotelRoomTypeItem(title: "غرفة رباعية", roomType: .quadrupleRoom),
+    HotelRoomTypeItem(title: "جناح وزاري", roomType: .ministerialSuite),
+    HotelRoomTypeItem(title: "جناح رئاسي", roomType: .presidentialSuite)
 ]
 
 private let apartmentTypes = [
-    RoomTypeItem(title: "استوديو", type: ApartmentType.studio),
-    RoomTypeItem(title: "شقة 1 غرفة", type: ApartmentType.oneBedroom),
-    RoomTypeItem(title: "شقة 2 غرفة", type: ApartmentType.twoBedrooms),
-    RoomTypeItem(title: "شقة 3 غرف", type: ApartmentType.threeBedrooms),
-    RoomTypeItem(title: "فيلا", type: ApartmentType.villa)
+    ApartmentTypeItem(title: "استوديو", apartmentType: .studio),
+    ApartmentTypeItem(title: "شقة 1 غرفة", apartmentType: .oneBedroom),
+    ApartmentTypeItem(title: "شقة 2 غرفة", apartmentType: .twoBedrooms),
+    ApartmentTypeItem(title: "شقة 3 غرف", apartmentType: .threeBedrooms),
+    ApartmentTypeItem(title: "فيلا", apartmentType: .villa)
 ]
-
-struct RoomTypeItem {
-    let title: String
-    let type: any Equatable & Codable
-}

@@ -2,7 +2,7 @@
 import Foundation
 
 
-struct HotelRoomForm {
+struct HotelRoomForm: PropertyForm {
     var title: String = ""
     var description: String = ""
     var location: LocationForm = .init()
@@ -12,6 +12,7 @@ struct HotelRoomForm {
     var details: DetailsForm = .init()
     var facilities: [Facility] = []
     var images: [ImageUpload] = [] // Keep as ImageUpload
+    var unavailableDates: [String] = []
 }
 
 struct LocationForm {

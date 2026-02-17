@@ -7,6 +7,8 @@ struct HotelRoomCreationFlow: View {
     @State private var form = HotelRoomForm()
     @State private var isSubmitting = false
     @State private var submitError: String?
+    @State private var showSuccessAlert = false
+    @Environment(\.dismiss) var dismiss
     private let locationUseCase: LocationUseCase
     private let createHotelRoomUseCase: CreateHotelRoomUseCase
 
@@ -80,23 +82,50 @@ struct HotelRoomCreationFlow: View {
                     }
                 )
             case 7:
-                HotelRoomStep7View(
-                    form: form,
-                    onBack: { currentStep = 6 },
-                    onNext: { updatedForm in
-                        self.form = updatedForm
-                        submitForm()
+                ZStack {
+                    HotelRoomStep7View(
+                        form: form,
+                        onBack: { currentStep = 6 },
+                        onNext: { updatedForm in
+                            self.form = updatedForm
+                            submitForm()
+                        }
+                    )
+                    .alert("خطأ", isPresented: Binding(
+                        get: { self.submitError != nil },
+                        set: { _ in self.submitError = nil }
+                    )) {
+                        Button("موافق") { }
+                    } message: {
+                        Text(self.submitError ?? "")
                     }
-                )
-                .alert("خطأ", isPresented: Binding(
-                    get: { self.submitError != nil },
-                    set: { _ in self.submitError = nil }
-                )) {
-                    Button("موافق") { }
-                } message: {
-                    Text(self.submitError ?? "")
+                    .alert("نجاح", isPresented: $showSuccessAlert) {
+                        Button("حسناً") {
+                            dismiss()
+                        }
+                    } message: {
+                        Text("تم إضافة العقار بنجاح")
+                    }
+                    .disabled(isSubmitting)
+                    
+                    if isSubmitting {
+                        ZStack {
+                            Color.black.opacity(0.3)
+                                .ignoresSafeArea()
+                            VStack(spacing: 16) {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                                    .tint(.white)
+                                Text("جارٍ إضافة العقار...")
+                                    .foregroundColor(.white)
+                                    .font(.headline)
+                            }
+                            .padding(30)
+                            .background(Color(hex: "#88417A"))
+                            .cornerRadius(16)
+                        }
+                    }
                 }
-                .disabled(isSubmitting)
                 
             default:
                 Text("Unknown Step")
@@ -109,16 +138,17 @@ struct HotelRoomCreationFlow: View {
         Task {
             do {
                 let propertyId = try await createHotelRoomUseCase.execute(form: form)
-                print("✅ Property created with ID: \(propertyId)")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    // Dismiss flow
+                await MainActor.run {
+                    print("✅ Property created with ID: \(propertyId)")
+                    isSubmitting = false
+                    showSuccessAlert = true
                 }
             } catch {
                 await MainActor.run {
                     self.submitError = "فشل إنشاء العقار: \(error.localizedDescription)"
+                    isSubmitting = false
                 }
             }
-            isSubmitting = false
         }
     }
 }

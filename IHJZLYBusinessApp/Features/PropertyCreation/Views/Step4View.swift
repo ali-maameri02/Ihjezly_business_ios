@@ -35,13 +35,16 @@ struct Step4View<FormData: PropertyForm>: View {
                 .shadow(radius: 1)
                 
                 ScrollView {
-                    ForEach(classifications, id: \.self) { classification in
-                        ClassificationOption(
-                            title: classification.arabicName,
-                            isSelected: viewModel.selectedClassification == classification,
-                            onSelect: { viewModel.selectedClassification = classification }
-                        )
+                    VStack(spacing: 8) {
+                        ForEach(classifications, id: \.self) { classification in
+                            ClassificationOption(
+                                title: classification.arabicName,
+                                isSelected: viewModel.selectedClassification == classification,
+                                onSelect: { viewModel.selectedClassification = classification }
+                            )
+                        }
                     }
+                    .padding(.horizontal, 16)
                 }
                 
                 NextButton(

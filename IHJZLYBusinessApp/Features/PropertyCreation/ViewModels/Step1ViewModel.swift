@@ -3,8 +3,8 @@ import Foundation
 import Combine
 
 @MainActor
-class Step1ViewModel: ObservableObject {
-    @Published var form: HotelRoomForm
+class Step1ViewModel<FormData: PropertyForm>: ObservableObject {
+    @Published var form: FormData
     @Published var validationErrors: [ValidationError] = []
     @Published var states: [String] = []
     @Published var districts: [String] = []
@@ -16,7 +16,7 @@ class Step1ViewModel: ObservableObject {
     private let currentUser: User
     private var loadTask: Task<Void, Never>?
     
-    init(form: HotelRoomForm, locationManager: LocationUseCase, currentUser: User) {
+    init(form: FormData, locationManager: LocationUseCase, currentUser: User) {
         self.form = form
         self.locationManager = locationManager
         self.currentUser = currentUser
@@ -90,7 +90,13 @@ class Step1ViewModel: ObservableObject {
     var isNextDisabled: Bool { !validationErrors.isEmpty }
     
     func validate() {
-        validationErrors = ValidationManager.shared.validateStep1(form: form)
+        validationErrors = []
+        if form.title.isEmpty {
+            validationErrors.append(ValidationError(message: "اسم العقار مطلوب"))
+        }
+        if form.description.isEmpty {
+            validationErrors.append(ValidationError(message: "وصف العقار مطلوب"))
+        }
     }
     
     deinit {

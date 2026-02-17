@@ -10,17 +10,17 @@ struct MainTabView: View {
                     Label("الرئيسية", systemImage: "house.fill")
                 }
             
-            Text("الحجوزات")
+            BookingsView()
                 .tabItem {
                     Label("الحجوزات", systemImage: "calendar")
                 }
             
-            Text("المحفظة")
+            WalletView()
                 .tabItem {
                     Label("المحفظة", systemImage: "creditcard.fill")
                 }
             
-            Text("الحساب")
+            ProfileView()
                 .tabItem {
                     Label("الحساب", systemImage: "person.crop.circle")
                 }

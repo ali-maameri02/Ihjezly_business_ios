@@ -1,54 +1,13 @@
 // Features/Home/Views/StaticUnitCard.swift
 import SwiftUI
-// Features/Home/Views/StaticUnitCard.swift
+
 struct StaticUnitCard: View {
     let card: StaticUnitCardModel
-    @State private var isLoading = false
-    @State private var error: String?
-    @State private var currentUser: User?
-    
-    private var destinationView: some View {
-        guard let currentUser = currentUser else {
-            return AnyView(Text("جارٍ التحميل..."))
-        }
-        
-        let client = APIClient(baseURLString: "http://31.220.56.155:5050")
-        client.defaultHeaders["Authorization"] = "Bearer \(UserDefaults.standard.string(forKey: "auth_token") ?? "")"
-        
-        let locationUseCase = LocationUseCase(apiClient: client, token: UserDefaults.standard.string(forKey: "auth_token") ?? "")
-        let repo = HotelRoomRepository(apiClient: client) // Reuse existing repo
-        let createUseCase = CreateHotelRoomUseCase(repo: repo, currentUser: currentUser)
-        
-        // Create empty form based on sub-type
-        let form = HotelRoomForm(
-            title: "",
-            description: "",
-            location: .init(),
-            price: 0,
-            discount: 0,
-            videoUrl: "",
-            details: DetailsForm(
-                numberOfAdults: 0,
-                numberOfChildren: 0,
-                hotelRoomType: .singleRoom, // Default
-                classification: .none
-            ),
-            facilities: [],
-            images: []
-        )
-        
-        return AnyView(
-            HotelRoomCreationFlow(
-                viewModel: HotelRoomStep1ViewModel(locationManager: locationUseCase, currentUser: currentUser),
-                locationUseCase: locationUseCase,
-                createHotelRoomUseCase: createUseCase
-            )
-        )
-    }
     
     var body: some View {
-        NavigationLink(destination: destinationView) {
-            // Your existing card UI
+        NavigationLink {
+            PropertyCreationNavigator(propertySubType: card.subType)
+        } label: {
             VStack(spacing: 8) {
                 Image(card.image)
                     .resizable()
@@ -70,18 +29,60 @@ struct StaticUnitCard: View {
             .padding(.horizontal, 4)
         }
     }
+}
+
+struct PropertyCreationNavigator: View {
+    let propertySubType: PropertySubType
+    @State private var currentUser: User?
+    @State private var isLoading = true
+    
+    var body: some View {
+        ZStack {
+            if isLoading {
+                ProgressView("جارٍ التحميل...")
+            } else if let user = currentUser {
+                creationFlowView(user: user)
+            } else {
+                errorView
+            }
+        }
+        .onAppear {
+            loadCurrentUser()
+        }
+    }
+    
+    @ViewBuilder
+    private func creationFlowView(user: User) -> some View {
+        let client = APIClient(baseURLString: "http://31.220.56.155:5050")
+        let token = UserDefaults.standard.string(forKey: "auth_token") ?? ""
+        let _ = client.defaultHeaders["Authorization"] = "Bearer \(token)"
+        
+        let locationUseCase = LocationUseCase(apiClient: client, token: token)
+        let repo = HotelRoomRepository(apiClient: client)
+        let createUseCase = CreateHotelRoomUseCase(repo: repo, currentUser: user)
+        
+        HotelRoomCreationFlow(
+            viewModel: HotelRoomStep1ViewModel(locationManager: locationUseCase, currentUser: user),
+            locationUseCase: locationUseCase,
+            createHotelRoomUseCase: createUseCase
+        )
+    }
+    
+    private var errorView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.largeTitle)
+                .foregroundColor(.red)
+            Text("يرجى تسجيل الدخول أولاً")
+                .font(.headline)
+        }
+    }
     
     private func loadCurrentUser() {
-        guard !isLoading else { return }
         guard let token = UserDefaults.standard.string(forKey: "auth_token") else {
-            DispatchQueue.main.async {
-                self.error = "يرجى تسجيل الدخول أولاً"
-            }
+            isLoading = false
             return
         }
-        
-        isLoading = true
-        error = nil
         
         Task {
             do {
@@ -96,17 +97,9 @@ struct StaticUnitCard: View {
                 }
             } catch {
                 await MainActor.run {
-                    self.error = "فشل تحميل بيانات المستخدم"
                     self.isLoading = false
                 }
-                print("❌ Failed to fetch current user: \(error)")
             }
         }
     }
 }
-
-
-    
-
-    
-  
