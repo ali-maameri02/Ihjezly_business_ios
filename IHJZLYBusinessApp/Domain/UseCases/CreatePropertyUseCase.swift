@@ -63,7 +63,6 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
     
     // MARK: - Chalet/RestHouse
     private func createChalet(form: HotelRoomForm) async throws -> String {
-        // Map HotelRoomForm to Chalet structure
         let chaletRequest = ChaletCreateRequest(
             title: form.title,
             description: form.description,
@@ -78,8 +77,8 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
             currency: "LYD",
             type: .residence,
             details: ChaletDetails(
-                maxGuests: form.details.numberOfAdults, // Reuse numberOfAdults for maxGuests
-                classification: form.details.classification
+                numberOfAdults: form.details.numberOfAdults,
+                numberOfChildren: form.details.numberOfChildren
             ),
             isAd: false,
             discount: form.discount > 0 ? Discount(value: form.discount) : nil,
@@ -94,7 +93,6 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
     
     // MARK: - Apartment
     private func createApartment(form: HotelRoomForm) async throws -> String {
-        // Map HotelRoomType to ApartmentType
         let apartmentType = mapHotelRoomToApartment(form.details.hotelRoomType)
         let apartmentRequest = ApartmentCreateRequest(
             title: form.title,
@@ -110,8 +108,9 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
             currency: "LYD",
             type: .residence,
             details: ApartmentDetails(
-                roomType: apartmentType,
-                classification: form.details.classification
+                numberOfAdults: form.details.numberOfAdults,
+                numberOfChildren: form.details.numberOfChildren,
+                apartmentType: apartmentType
             ),
             isAd: false,
             discount: form.discount > 0 ? Discount(value: form.discount) : nil,
@@ -126,7 +125,6 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
     
     // MARK: - Resort
     private func createResort(form: HotelRoomForm) async throws -> String {
-        // Similar to HotelRoom but with different endpoint
         let resortRequest = ResortCreateRequest(
             title: form.title,
             description: form.description,
@@ -141,8 +139,10 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
             currency: "LYD",
             type: .residence,
             details: ResortDetails(
-                roomType: form.details.hotelRoomType,
-                classification: form.details.classification
+                numberOfAdults: form.details.numberOfAdults,
+                numberOfChildren: form.details.numberOfChildren,
+                type: .studio,
+                clasification: form.details.classification
             ),
             isAd: false,
             discount: form.discount > 0 ? Discount(value: form.discount) : nil,
@@ -159,11 +159,8 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
     private func mapHotelRoomToApartment(_ hotelType: HotelRoomType) -> ApartmentType {
         switch hotelType {
         case .singleRoom: return .studio
-        case .twinRoomOneBed: return .oneBedroom
-        case .twinRoomTwoBeds: return .twoBedrooms
-        case .tripleRoom: return .threeBedrooms
-        case .suite, .ministerialSuite, .presidentialSuite: return .villa
-        default: return .studio
+        case .twinRoomOneBed, .twinRoomTwoBeds: return .twoBedroom
+        default: return .threeBedroom
         }
     }
 }
@@ -187,8 +184,8 @@ struct ChaletCreateRequest: Codable {
 }
 
 struct ChaletDetails: Codable {
-    let maxGuests: Int
-    let classification: Classification
+    let numberOfAdults: Int
+    let numberOfChildren: Int
 }
 
 struct ApartmentCreateRequest: Codable {
@@ -209,8 +206,9 @@ struct ApartmentCreateRequest: Codable {
 }
 
 struct ApartmentDetails: Codable {
-    let roomType: ApartmentType
-    let classification: Classification
+    let numberOfAdults: Int
+    let numberOfChildren: Int
+    let apartmentType: ApartmentType
 }
 
 struct ResortCreateRequest: Codable {
@@ -231,14 +229,20 @@ struct ResortCreateRequest: Codable {
 }
 
 struct ResortDetails: Codable {
-    let roomType: HotelRoomType
-    let classification: Classification
+    let numberOfAdults: Int
+    let numberOfChildren: Int
+    let type: ResortsType
+    let clasification: Classification
+}
+
+enum ResortsType: String, Codable {
+    case studio = "studio"
+    case twoBedroom = "TwoBedroom"
+    case threeBedroom = "ThreeBedroom"
 }
 
 enum ApartmentType: String, Codable {
-    case studio = "Studio"
-    case oneBedroom = "OneBedroom"
-    case twoBedrooms = "TwoBedrooms"
-    case threeBedrooms = "ThreeBedrooms"
-    case villa = "Villa"
+    case studio = "studio"
+    case twoBedroom = "TwoBedroom"
+    case threeBedroom = "ThreeBedroom"
 }

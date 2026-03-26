@@ -1,42 +1,33 @@
-//
-//  UnavailableDatesViewModel.swift
-//  IHJZLYBusinessApp
-//
-//  Created by Mohamed Ali Benouarzeg on 15/2/2026.
-//
-
 import Foundation
 import Combine
 import SwiftUI
 
 // MARK: - ViewModel
 @MainActor
-final class UnavailableDatesViewModel: ObservableObject {
-    @Published var form: HotelRoomForm
+final class UnavailableDatesViewModel<FormData: PropertyForm>: ObservableObject {
+    @Published var form: FormData
     @Published var selectedDates: [Date] = []
     @Published var showDatePicker = false
     @Published var tempDate = Date()
-    
-    init(form: HotelRoomForm) {
+
+    init(form: FormData) {
         self.form = form
-        // Convert existing unavailable dates from form
-        selectedDates = form.unavailableDates.compactMap { dateString in
-            let formatter = ISO8601DateFormatter()
-            return formatter.date(from: dateString)
-        }
+        let formatter = ISO8601DateFormatter()
+        selectedDates = form.unavailableDates.compactMap { formatter.date(from: $0) }
     }
-    
+
     func addDate(_ date: Date) {
-        guard !selectedDates.contains(where: { $0 == date }) else { return }
+        guard !selectedDates.contains(where: { Calendar.current.isDate($0, inSameDayAs: date) }) else { return }
         selectedDates.append(date)
     }
-    
+
     func removeDate(_ date: Date) {
-        selectedDates.removeAll { $0 == date }
+        selectedDates.removeAll { Calendar.current.isDate($0, inSameDayAs: date) }
     }
-    
+
     func saveDates() {
         let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
         form.unavailableDates = selectedDates.map { formatter.string(from: $0) }
     }
 }
@@ -45,14 +36,14 @@ final class UnavailableDatesViewModel: ObservableObject {
 struct DatePickerView: View {
     @Binding var selectedDate: Date
     let onConfirm: () -> Void
-    
+
     var body: some View {
         NavigationStack {
             VStack {
                 DatePicker("اختر التاريخ", selection: $selectedDate, displayedComponents: [.date])
                     .datePickerStyle(GraphicalDatePickerStyle())
                     .padding()
-                
+
                 Button("تأكيد") {
                     onConfirm()
                 }

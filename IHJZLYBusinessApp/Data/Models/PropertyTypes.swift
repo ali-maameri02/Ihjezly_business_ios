@@ -68,12 +68,3 @@ struct ApartmentForm: PropertyForm {
     var images: [ImageUpload] = []
     var unavailableDates: [String] = []
 }
-
-//// MARK: - Room Types
-//enum ApartmentType: String, Codable {
-//    case studio = "Studio"
-//    case oneBedroom = "OneBedroom"
-//    case twoBedrooms = "TwoBedrooms"
-//    case threeBedrooms = "ThreeBedrooms"
-//    case villa = "Villa"
-//}

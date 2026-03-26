@@ -1,17 +1,17 @@
 // Features/PropertyCreation/Views/UnavailableDatesView.swift
 import SwiftUI
 
-struct UnavailableDatesView: View {
-    @StateObject private var viewModel: UnavailableDatesViewModel
+struct UnavailableDatesView<FormData: PropertyForm>: View {
+    @StateObject private var viewModel: UnavailableDatesViewModel<FormData>
     let onBack: () -> Void
-    let onNext: (HotelRoomForm) -> Void
-    
-    init(form: HotelRoomForm, onBack: @escaping () -> Void, onNext: @escaping (HotelRoomForm) -> Void) {
+    let onNext: (FormData) -> Void
+
+    init(form: FormData, onBack: @escaping () -> Void, onNext: @escaping (FormData) -> Void) {
         _viewModel = StateObject(wrappedValue: UnavailableDatesViewModel(form: form))
         self.onBack = onBack
         self.onNext = onNext
     }
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -27,7 +27,7 @@ struct UnavailableDatesView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
-                    
+
                     Divider()
                         .background(Color(hex: "#88417A"))
                         .frame(height: 2)
@@ -36,17 +36,15 @@ struct UnavailableDatesView: View {
                 }
                 .background(Color.white)
                 .shadow(radius: 1)
-                
+
                 ScrollView {
                     VStack(spacing: 16) {
-                        // Date picker explanation
                         Text("اختر التواريخ التي لن يكون العقار متاحًا فيها")
                             .font(.body)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 16)
-                        
-                        // Selected dates list
+
                         if !viewModel.selectedDates.isEmpty {
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                                 ForEach(viewModel.selectedDates, id: \.self) { date in
@@ -68,8 +66,7 @@ struct UnavailableDatesView: View {
                             }
                             .padding(.horizontal, 16)
                         }
-                        
-                        // Add date button
+
                         Button(action: { viewModel.showDatePicker = true }) {
                             HStack {
                                 Image(systemName: "plus")
@@ -86,7 +83,7 @@ struct UnavailableDatesView: View {
                     }
                     .padding(.vertical, 16)
                 }
-                
+
                 NextButton(
                     action: {
                         viewModel.saveDates()
@@ -106,4 +103,3 @@ struct UnavailableDatesView: View {
         }
     }
 }
-

@@ -8,17 +8,17 @@ struct StaticUnitCardsGrid: View {
     // All available property types
     private let allCards: [StaticUnitCardModel] = [
         // Accommodations
-        StaticUnitCardModel(title: "غرفة فندق", image: "hotel_room", subType: .hotelRoom),
-        StaticUnitCardModel(title: "شقة", image: "apartment", subType: .apartment),
-        StaticUnitCardModel(title: "شاليه", image: "chalet", subType: .chalet),
-        StaticUnitCardModel(title: "استراحة", image: "rest_house", subType: .restHouse),
-        StaticUnitCardModel(title: "منتجع", image: "resort", subType: .resort),
+        StaticUnitCardModel(title: "فنادق", image: "hotel", subType: .hotelRoom),
+        StaticUnitCardModel(title: "شقق خاصة", image: "hotelapartments", subType: .apartment),
+        StaticUnitCardModel(title: "شاليهات", image: "chalet", subType: .chalet),
+        StaticUnitCardModel(title: "استراحات", image: "miniqaat", subType: .restHouse),
+        StaticUnitCardModel(title: "منتجعات", image: "resort", subType: .resort),
         
         // Events
-        StaticUnitCardModel(title: "قاعة صغيرة", image: "event_small", subType: .eventHallSmall),
-        StaticUnitCardModel(title: "قاعة كبيرة", image: "event_large", subType: .eventHallLarge),
-        StaticUnitCardModel(title: "غرفة اجتماعات", image: "meeting_room", subType: .meetingRoom),
-        StaticUnitCardModel(title: "فيلا مناسبات", image: "villa_event", subType: .villaEvent)
+        StaticUnitCardModel(title: "قاعة صغيرة", image: "eventhalls", subType: .eventHallSmall),
+        StaticUnitCardModel(title: "قاعة كبيرة", image: "eventhalls", subType: .eventHallLarge),
+        StaticUnitCardModel(title: "غرفة اجتماعات", image: "meeting", subType: .meetingRoom),
+        StaticUnitCardModel(title: "فيلا مناسبات", image: "events", subType: .villaEvent)
     ]
     
     var filteredCards: [StaticUnitCardModel] {

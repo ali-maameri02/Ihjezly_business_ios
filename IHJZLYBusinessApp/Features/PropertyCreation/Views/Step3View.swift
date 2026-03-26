@@ -126,8 +126,6 @@ private let hotelRoomTypes = [
 
 private let apartmentTypes = [
     ApartmentTypeItem(title: "استوديو", apartmentType: .studio),
-    ApartmentTypeItem(title: "شقة 1 غرفة", apartmentType: .oneBedroom),
-    ApartmentTypeItem(title: "شقة 2 غرفة", apartmentType: .twoBedrooms),
-    ApartmentTypeItem(title: "شقة 3 غرف", apartmentType: .threeBedrooms),
-    ApartmentTypeItem(title: "فيلا", apartmentType: .villa)
+    ApartmentTypeItem(title: "شقة 2 غرفة", apartmentType: .twoBedroom),
+    ApartmentTypeItem(title: "شقة 3 غرف", apartmentType: .threeBedroom)
 ]

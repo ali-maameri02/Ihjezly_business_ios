@@ -6,12 +6,12 @@ struct PropertyCreationFlow: View {
     @State private var form = HotelRoomForm()
     @State private var isSubmitting = false
     @State private var submitError: String?
-    
+
     private let propertySubType: PropertySubType
     private let locationUseCase: LocationUseCase
     private let createUseCase: CreatePropertyUseCaseProtocol
     private let currentUser: User
-    
+
     init(
         propertySubType: PropertySubType,
         locationUseCase: LocationUseCase,
@@ -23,7 +23,22 @@ struct PropertyCreationFlow: View {
         self.createUseCase = createUseCase
         self.currentUser = currentUser
     }
-    
+
+    // Whether this property type has a classification step
+    private var hasClassification: Bool {
+        propertySubType != .chalet && propertySubType != .restHouse
+    }
+
+    // Step mapping:
+    // 1 = Title/Description
+    // 2 = Location
+    // 3 = Type-specific details (room type / guest count)
+    // 4 = Classification (only if hasClassification), else skip to 5
+    // 5 = Images
+    // 6 = Facilities
+    // 7 = Unavailable Dates (all types)
+    // 8 = Price
+
     var body: some View {
         Group {
             switch currentStep {
@@ -38,7 +53,7 @@ struct PropertyCreationFlow: View {
                         currentStep = 2
                     }
                 )
-                
+
             case 2:
                 Step2View(
                     form: form,
@@ -49,76 +64,55 @@ struct PropertyCreationFlow: View {
                         currentStep = 3
                     }
                 )
-                
+
             case 3:
                 Step3View(
                     form: form,
                     propertySubType: propertySubType,
                     onNext: { updatedForm in
                         form = updatedForm
-                        currentStep = nextStepAfter3
+                        currentStep = hasClassification ? 4 : 5
                     }
                 )
-                
+
             case 4:
-                if shouldShowClassification {
-                    Step4View(
-                        form: form,
-                        onNext: { updatedForm in
-                            form = updatedForm
-                            currentStep = 5
-                        }
-                    )
-                } else {
-                    Step5View(
-                        form: form,
-                        onNext: { updatedForm in
-                            form = updatedForm
-                            currentStep = 6
-                        }
-                    )
-                }
-                
+                Step4View(
+                    form: form,
+                    onNext: { updatedForm in
+                        form = updatedForm
+                        currentStep = 5
+                    }
+                )
+
             case 5:
-                if shouldShowClassification {
-                    Step5View(
-                        form: form,
-                        onNext: { updatedForm in
-                            form = updatedForm
-                            currentStep = 6
-                        }
-                    )
-                } else {
-                    Step6View(
-                        form: form,
-                        onNext: { updatedForm in
-                            form = updatedForm
-                            currentStep = 7
-                        }
-                    )
-                }
-                
+                Step5View(
+                    form: form,
+                    onNext: { updatedForm in
+                        form = updatedForm
+                        currentStep = 6
+                    }
+                )
+
             case 6:
-                if propertySubType == .chalet || propertySubType == .restHouse {
-                    UnavailableDatesView(
-                        form: form,
-                        onBack: { currentStep = 5 },
-                        onNext: { updatedForm in
-                            form = updatedForm
-                            currentStep = 7
-                        }
-                    )
-                } else {
-                    Step6View(
-                        form: form,
-                        onNext: { updatedForm in
-                            form = updatedForm
-                            currentStep = 7
-                        }
-                    )
-                }
-                
+                Step6View(
+                    form: form,
+                    onNext: { updatedForm in
+                        form = updatedForm
+                        currentStep = 7
+                    }
+                )
+
             case 7:
+                UnavailableDatesView(
+                    form: form,
+                    onBack: { currentStep = 6 },
+                    onNext: { updatedForm in
+                        form = updatedForm
+                        currentStep = 8
+                    }
+                )
+
+            case 8:
                 Step7View(
                     form: form,
                     onNext: { updatedForm in
@@ -135,30 +129,19 @@ struct PropertyCreationFlow: View {
                     Text(self.submitError ?? "")
                 }
                 .disabled(isSubmitting)
-                
+
             default:
                 Text("Unknown Step")
             }
         }
     }
-    
-    private var shouldShowClassification: Bool {
-        propertySubType != .chalet && propertySubType != .restHouse
-    }
-    
-    private var nextStepAfter3: Int {
-        shouldShowClassification ? 4 : 5
-    }
-    
+
     private func submitForm() {
         isSubmitting = true
         Task {
             do {
                 let propertyId = try await createUseCase.execute(form: form, propertyType: propertySubType)
                 print("✅ Property created with ID: \(propertyId)")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    // Dismiss flow
-                }
             } catch {
                 await MainActor.run {
                     self.submitError = "فشل إنشاء العقار: \(error.localizedDescription)"
