@@ -9,10 +9,11 @@ struct StaticUnitCardsGrid: View {
     private let allCards: [StaticUnitCardModel] = [
         // Accommodations
         StaticUnitCardModel(title: "فنادق", image: "hotel", subType: .hotelRoom),
-        StaticUnitCardModel(title: "شقق خاصة", image: "hotelapartments", subType: .apartment),
+        StaticUnitCardModel(title: "شقق فندقية", image: "hotelapartments", subType: .hotelApartment),
         StaticUnitCardModel(title: "شاليهات", image: "chalet", subType: .chalet),
         StaticUnitCardModel(title: "استراحات", image: "miniqaat", subType: .restHouse),
         StaticUnitCardModel(title: "منتجعات", image: "resort", subType: .resort),
+        StaticUnitCardModel(title: "شقق خاصة", image: "khassa", subType: .apartment),
         
         // Events
         StaticUnitCardModel(title: "قاعة صغيرة", image: "eventhalls", subType: .eventHallSmall),

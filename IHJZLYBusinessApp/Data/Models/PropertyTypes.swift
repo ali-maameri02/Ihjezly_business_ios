@@ -4,6 +4,7 @@
 enum PropertySubType: String, CaseIterable {
     // Accommodations
     case hotelRoom = "HotelRoom"
+    case hotelApartment = "HotelApartment"
     case apartment = "Apartment"
     case chalet = "Chalet"
     case restHouse = "RestHouse"

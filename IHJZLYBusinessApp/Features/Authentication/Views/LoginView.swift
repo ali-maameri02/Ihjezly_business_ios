@@ -25,15 +25,12 @@ struct LoginView: View {
                 .foregroundColor(.primary)
             
             HStack {
-                Image(systemName: "phone.fill")
+                Image(systemName: "person.fill")
                     .foregroundColor(.gray)
-                TextField("912345678", text: $viewModel.phoneDigits)
-                    .keyboardType(.phonePad)
+                TextField("رقم الهاتف أو البريد الإلكتروني", text: $viewModel.phoneDigits)
+                    .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
-                    .onChange(of: viewModel.phoneDigits) { newValue in
-                        let digits = newValue.filter { $0.isNumber }
-                        viewModel.phoneDigits = String(digits.prefix(9))
-                    }
+                    .autocorrectionDisabled()
             }
             .padding()
             .background(Color.gray.opacity(0.1))

@@ -11,7 +11,7 @@ struct StaticUnitCardModel: Identifiable {
     // Computed property for HomeView category
     var category: PropertyCategory {
         switch subType {
-        case .hotelRoom, .apartment, .chalet, .restHouse, .resort:
+        case .hotelRoom, .hotelApartment, .apartment, .chalet, .restHouse, .resort:
             return .accommodations
         case .eventHallSmall, .eventHallLarge, .meetingRoom, .villaEvent:
             return .events

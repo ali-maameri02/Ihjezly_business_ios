@@ -23,32 +23,45 @@ final class LoginViewModel: ObservableObject {
     }
     
     func login() async {
-        let digits = phoneDigits.filter { $0.isNumber }
-        guard digits.count == 9 else {
-            errorMessage = "أدخل 9 أرقام ليبية صحيحة"
+        let input = phoneDigits.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !input.isEmpty else {
+            errorMessage = "رقم الهاتف أو البريد الإلكتروني مطلوب"
             return
         }
-        
         guard !password.isEmpty else {
             errorMessage = "كلمة المرور مطلوبة"
             return
         }
-        
+
         isLoading = true
         errorMessage = nil
-        
+
+        // If input is a phone (all digits), normalize to 218XXXXXXXXX
+        let emailOrPhone: String
+        let digits = input.filter { $0.isNumber }
+        if !input.contains("@") && digits.count >= 9 {
+            if digits.hasPrefix("218") && digits.count == 12 {
+                emailOrPhone = digits
+            } else {
+                emailOrPhone = "218" + String(digits.suffix(9))
+            }
+        } else {
+            emailOrPhone = input
+        }
+
         do {
-            let fullPhoneNumber = "218" + digits
             let accessToken = try await loginUseCase.execute(
-                emailOrPhone: fullPhoneNumber,
+                emailOrPhone: emailOrPhone,
                 password: password
             )
             UserDefaults.standard.set(accessToken, forKey: "auth_token")
-            appState.isAuthenticated = true // ✅ Now works
+            appState.isAuthenticated = true
+        } catch let APIError.badRequest(msg) {
+            errorMessage = msg
         } catch {
-            errorMessage = "فشل تسجيل الدخول. تحقق من بياناتك."
+            errorMessage = "فشل الاتصال بالخادم: \(error.localizedDescription)"
         }
-        
+
         isLoading = false
     }
     
