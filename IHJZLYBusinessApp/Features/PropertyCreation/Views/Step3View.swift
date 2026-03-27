@@ -59,61 +59,51 @@ struct Step3View<FormData: PropertyForm>: View {
 
     @ViewBuilder
     private var content: some View {
-        switch propertySubType {
-
-        case .hotelRoom:
-            ForEach(hotelRoomTypes, id: \.title) { item in
-                RoomTypeOption(
-                    title: item.title,
-                    isSelected: viewModel.selectedHotelRoomType == item.roomType,
-                    onSelect: { viewModel.selectedHotelRoomType = item.roomType; viewModel.validate() }
-                )
+        // Type-selection options (hotelRoom, hotelApartment, resort)
+        if propertySubType.showsSelectOptions {
+            Group {
+                switch propertySubType {
+                case .hotelRoom:
+                    ForEach(hotelRoomTypes, id: \.title) { item in
+                        RoomTypeOption(
+                            title: item.title,
+                            isSelected: viewModel.selectedHotelRoomType == item.roomType,
+                            onSelect: { viewModel.selectedHotelRoomType = item.roomType; viewModel.validate() }
+                        )
+                    }
+                case .hotelApartment:
+                    ForEach(apartmentUnitTypes, id: \.title) { item in
+                        RoomTypeOption(
+                            title: item.title,
+                            isSelected: viewModel.selectedHotelApartmentType == item.hotelApartmentType,
+                            onSelect: { viewModel.selectedHotelApartmentType = item.hotelApartmentType; viewModel.validate() }
+                        )
+                    }
+                case .resort:
+                    ForEach(resortTypes, id: \.title) { item in
+                        RoomTypeOption(
+                            title: item.title,
+                            isSelected: viewModel.selectedResortType == item.resortType,
+                            onSelect: { viewModel.selectedResortType = item.resortType; viewModel.validate() }
+                        )
+                    }
+                default:
+                    EmptyView()
+                }
             }
             .padding(.horizontal, 16)
+        }
+
+        // Guest counters (chalet, restHouse, apartment)
+        if propertySubType.usesGuestCounters {
+            GuestCounter(label: "عدد البالغين", count: $viewModel.numberOfAdults, min: 1, max: 50)
+            GuestCounter(label: "عدد الأطفال", count: $viewModel.numberOfChildren, min: 0, max: 50)
+        }
+
+        // Types that show options also show guest counters below them
+        if propertySubType.showsSelectOptions {
             GuestCounter(label: "عدد الاطفال", count: $viewModel.numberOfChildren, min: 0, max: 10)
             GuestCounter(label: "عدد البالغين", count: $viewModel.numberOfAdults, min: 1, max: 10)
-
-        case .hotelApartment:
-            ForEach(apartmentUnitTypes, id: \.title) { item in
-                RoomTypeOption(
-                    title: item.title,
-                    isSelected: viewModel.selectedHotelApartmentType == item.hotelApartmentType,
-                    onSelect: { viewModel.selectedHotelApartmentType = item.hotelApartmentType; viewModel.validate() }
-                )
-            }
-            .padding(.horizontal, 16)
-            GuestCounter(label: "عدد الاطفال", count: $viewModel.numberOfChildren, min: 0, max: 10)
-            GuestCounter(label: "عدد البالغين", count: $viewModel.numberOfAdults, min: 1, max: 10)
-
-        case .apartment:
-            ForEach(apartmentTypes, id: \.title) { item in
-                RoomTypeOption(
-                    title: item.title,
-                    isSelected: viewModel.selectedApartmentType == item.apartmentType,
-                    onSelect: { viewModel.selectedApartmentType = item.apartmentType; viewModel.validate() }
-                )
-            }
-            .padding(.horizontal, 16)
-            GuestCounter(label: "عدد الاطفال", count: $viewModel.numberOfChildren, min: 0, max: 10)
-            GuestCounter(label: "عدد البالغين", count: $viewModel.numberOfAdults, min: 1, max: 10)
-
-        case .resort:
-            ForEach(resortTypes, id: \.title) { item in
-                RoomTypeOption(
-                    title: item.title,
-                    isSelected: viewModel.selectedResortType == item.resortType,
-                    onSelect: { viewModel.selectedResortType = item.resortType; viewModel.validate() }
-                )
-            }
-            .padding(.horizontal, 16)
-            GuestCounter(label: "عدد الاطفال", count: $viewModel.numberOfChildren, min: 0, max: 10)
-            GuestCounter(label: "عدد البالغين", count: $viewModel.numberOfAdults, min: 1, max: 10)
-
-        case .chalet, .restHouse:
-            GuestCounter(label: "عدد الضيوف", count: $viewModel.maxGuests, min: 1, max: 50)
-
-        default:
-            EmptyView()
         }
     }
 }
@@ -121,7 +111,6 @@ struct Step3View<FormData: PropertyForm>: View {
 // MARK: - Type data
 private struct HotelRoomTypeItem      { let title: String; let roomType: HotelRoomType }
 private struct HotelApartmentTypeItem { let title: String; let hotelApartmentType: HotelApartmentType }
-private struct ApartmentTypeItem      { let title: String; let apartmentType: ApartmentType }
 private struct ResortTypeItem         { let title: String; let resortType: ResortsType }
 
 private let hotelRoomTypes: [HotelRoomTypeItem] = [
@@ -139,12 +128,6 @@ private let apartmentUnitTypes: [HotelApartmentTypeItem] = [
     .init(title: "استوديو",       hotelApartmentType: .studio),
     .init(title: "شقة غرفتين",   hotelApartmentType: .twoBedroom),
     .init(title: "شقة ثلاث غرف", hotelApartmentType: .threeBedroom)
-]
-
-private let apartmentTypes: [ApartmentTypeItem] = [
-    .init(title: "استوديو",       apartmentType: .studio),
-    .init(title: "شقة غرفتين",   apartmentType: .twoBedroom),
-    .init(title: "شقة ثلاث غرف", apartmentType: .threeBedroom)
 ]
 
 private let resortTypes: [ResortTypeItem] = [

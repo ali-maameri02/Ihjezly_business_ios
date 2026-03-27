@@ -42,17 +42,9 @@ class Step3ViewModel<FormData: PropertyForm>: ObservableObject {
             if selectedHotelApartmentType == nil {
                 validationErrors.append(ValidationError(message: "يجب اختيار نوع الشقة الفندقية"))
             }
-        case .apartment:
-            if selectedApartmentType == nil {
-                validationErrors.append(ValidationError(message: "يجب اختيار نوع الشقة"))
-            }
         case .resort:
             if selectedResortType == nil {
                 validationErrors.append(ValidationError(message: "يجب اختيار نوع الوحدة"))
-            }
-        case .chalet, .restHouse:
-            if maxGuests == 0 {
-                validationErrors.append(ValidationError(message: "يجب تحديد عدد الضيوف"))
             }
         default:
             break
@@ -67,18 +59,13 @@ class Step3ViewModel<FormData: PropertyForm>: ObservableObject {
     private func saveToForm() {
         form.details.numberOfAdults = numberOfAdults
         form.details.numberOfChildren = numberOfChildren
-        form.details.maxGuests = maxGuests
         switch propertySubType {
         case .hotelRoom:
             form.details.hotelRoomType = selectedHotelRoomType ?? .singleRoom
         case .hotelApartment:
             form.details.hotelApartmentType = selectedHotelApartmentType
-        case .apartment:
-            form.details.apartmentType = selectedApartmentType
         case .resort:
             form.details.resortType = selectedResortType
-        case .chalet, .restHouse:
-            form.details.numberOfAdults = maxGuests
         default:
             break
         }

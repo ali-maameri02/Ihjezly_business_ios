@@ -13,24 +13,29 @@ enum PropertySubType: String, CaseIterable {
     case meetingRoom    = "MeetingRoom"
     case villaEvent     = "VillaEvent"
 
-    // Step 3 shows type-selection UI for these types
-    var hasTypeSelection: Bool {
+    // Step 3 shows type-selection options (studio / 2BR / 3BR etc.)
+    var showsSelectOptions: Bool {
         switch self {
-        case .hotelRoom, .hotelApartment, .apartment, .resort: return true
+        case .apartment, .chalet, .restHouse: return false
+        default: return hasStep3
+        }
+    }
+
+    // Step 3 shows adults + children counters
+    var usesGuestCounters: Bool {
+        switch self {
+        case .chalet, .restHouse, .apartment: return true
         default: return false
         }
     }
 
-    // Step 3 shows guest counter only for these types
-    var hasGuestCounter: Bool {
+    // Step 3 is present when the type has any step-3 content
+    var hasStep3: Bool {
         switch self {
-        case .chalet, .restHouse: return true
+        case .hotelRoom, .hotelApartment, .apartment, .chalet, .restHouse, .resort: return true
         default: return false
         }
     }
-
-    // Step 3 is present when the type has either type-selection or guest counter
-    var hasStep3: Bool { hasTypeSelection || hasGuestCounter }
 
     var hasUnavailableDatesStep: Bool {
         switch self {
@@ -82,9 +87,10 @@ enum PropertySubType: String, CaseIterable {
         switch self {
         case .hotelRoom:      return "نوع الغرفة"
         case .hotelApartment: return "نوع الشقة الفندقية"
-        case .apartment:      return "نوع الشقة"
+        case .apartment:      return "عدد الضيوف"
         case .resort:         return "نوع الوحدة"
-        case .chalet, .restHouse: return "عدد الضيوف"
+        case .chalet:         return "عدد الضيوف"
+        case .restHouse:      return "عدد الضيوف"
         default:              return "تفاصيل العقار"
         }
     }
