@@ -97,6 +97,12 @@ class Step1ViewModel<FormData: PropertyForm>: ObservableObject {
         if form.description.isEmpty {
             validationErrors.append(ValidationError(message: "وصف العقار مطلوب"))
         }
+        if form.location.state.isEmpty {
+            validationErrors.append(ValidationError(message: "المدينة مطلوبة"))
+        }
+        if form.location.city.isEmpty {
+            validationErrors.append(ValidationError(message: "الحي مطلوب"))
+        }
     }
     
     deinit {

@@ -9,9 +9,10 @@ final class Step4ViewModel<FormData: PropertyForm>: ObservableObject {
     
     init(form: FormData) {
         self.form = form
+        self.selectedClassification = form.details.classification
     }
     
     func goToNext() {
-        // Classification is saved in the form by the view
+        form.details.classification = selectedClassification
     }
 }

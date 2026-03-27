@@ -9,11 +9,17 @@ final class Step7ViewModel<FormData: PropertyForm>: ObservableObject {
     @Published var discountText: String = ""
     @Published var validationErrors: [ValidationError] = []
 
+    private var cancellables = Set<AnyCancellable>()
+
     init(form: FormData) {
         self.form = form
         self.priceText = form.price > 0 ? "\(form.price)" : ""
         self.discountText = form.discount > 0 ? "\(form.discount)" : ""
-        validate()
+
+        Publishers.CombineLatest($priceText, $discountText)
+            .dropFirst()
+            .sink { [weak self] _, _ in self?.validate() }
+            .store(in: &cancellables)
     }
 
     var isNextDisabled: Bool { !validationErrors.isEmpty }

@@ -4,7 +4,7 @@ struct Step1View<FormData: PropertyForm>: View {
     @StateObject private var viewModel: Step1ViewModel<FormData>
     let onBack: (() -> Void)?
     let onNext: (FormData) -> Void
-    
+
     init(
         form: FormData,
         locationUseCase: LocationUseCase,
@@ -16,7 +16,7 @@ struct Step1View<FormData: PropertyForm>: View {
         self.onBack = onBack
         self.onNext = onNext
     }
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -36,7 +36,7 @@ struct Step1View<FormData: PropertyForm>: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
-                    
+
                     Divider()
                         .background(Color(hex: "#88417A"))
                         .frame(height: 2)
@@ -45,45 +45,105 @@ struct Step1View<FormData: PropertyForm>: View {
                 }
                 .background(Color.white)
                 .shadow(radius: 1)
-                
+
                 ScrollView {
-                    // Title field
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("اسم العقار")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        TextField("", text: $viewModel.title)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .padding(12)
-                            .background(Color.white)
-                            .cornerRadius(8)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
+                    VStack(spacing: 16) {
+
+                        // Title
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("اسم العقار")
+                                .font(.headline).foregroundColor(.secondary)
+                            TextField("", text: $viewModel.title)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .padding(12)
+                                .background(Color.white)
+                                .cornerRadius(8)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
+
+                        // State (city/governorate) picker
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("المدينة")
+                                .font(.headline).foregroundColor(.secondary)
+                            if viewModel.hasLoadedStates {
+                                Menu {
+                                    ForEach(viewModel.states, id: \.self) { s in
+                                        Button(s) {
+                                            viewModel.state = s
+                                            Task { await viewModel.loadDistricts(for: s) }
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(viewModel.state.isEmpty ? "اختر المدينة" : viewModel.state)
+                                            .foregroundColor(viewModel.state.isEmpty ? .gray : .primary)
+                                        Spacer()
+                                        Image(systemName: "chevron.down")
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(12)
+                                    .background(Color.white)
+                                    .cornerRadius(8)
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
+                                }
+                            } else {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                                    .padding(12)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
+
+                        // District (neighbourhood) picker
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("الحي")
+                                .font(.headline).foregroundColor(.secondary)
+                            Menu {
+                                ForEach(viewModel.districts, id: \.self) { d in
+                                    Button(d) { viewModel.city = d }
+                                }
+                            } label: {
+                                HStack {
+                                    Text(viewModel.city.isEmpty ? "اختر الحي" : viewModel.city)
+                                        .foregroundColor(viewModel.city.isEmpty ? .gray : .primary)
+                                    Spacer()
+                                    Image(systemName: "chevron.down")
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(12)
+                                .background(Color.white)
+                                .cornerRadius(8)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
+                            }
+                            .disabled(viewModel.state.isEmpty || viewModel.districts.isEmpty)
+                            .opacity(viewModel.state.isEmpty ? 0.5 : 1)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
+
+                        // Description
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("وصف العقار")
+                                .font(.headline).foregroundColor(.secondary)
+                            TextField("", text: $viewModel.description)
+                                .multilineTextAlignment(.leading)
+                                .lineLimit(nil)
+                                .frame(height: 40)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .padding(12)
+                                .background(Color.white)
+                                .cornerRadius(8)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
-                    
-                    // City/District selectors (reuse existing implementation)
-                    // ...
-                    
-                    // Description field
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("وصف العقار")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        TextField("", text: $viewModel.description)
-                            .multilineTextAlignment(.leading)
-                            .lineLimit(nil)
-                            .frame(height: 40)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .padding(12)
-                            .background(Color.white)
-                            .cornerRadius(8)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
+                    .padding(.vertical, 16)
                 }
-                
+
                 ValidationView(errors: viewModel.validationErrors)
                 NextButton(
                     action: { onNext(viewModel.form) },
@@ -92,6 +152,11 @@ struct Step1View<FormData: PropertyForm>: View {
             }
             .background(Color.white)
             .navigationBarHidden(true)
+            .alert("خطأ", isPresented: $viewModel.isErrorAlertPresented) {
+                Button("حسناً") {}
+            } message: {
+                Text(viewModel.errorMessage ?? "")
+            }
         }
     }
 }

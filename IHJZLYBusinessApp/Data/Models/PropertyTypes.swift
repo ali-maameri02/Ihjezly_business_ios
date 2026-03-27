@@ -1,23 +1,96 @@
+// Data/Models/PropertyTypes.swift
 
-
-// MARK: - Sub-Types (for API endpoints)
+// MARK: - Sub-Types
 enum PropertySubType: String, CaseIterable {
-    // Accommodations
-    case hotelRoom = "HotelRoom"
+    case hotelRoom      = "HotelRoom"
     case hotelApartment = "HotelApartment"
-    case apartment = "Apartment"
-    case chalet = "Chalet"
-    case restHouse = "RestHouse"
-    case resort = "Resort"
-    
-    // Events
+    case apartment      = "Apartment"
+    case chalet         = "Chalet"
+    case restHouse      = "RestHouse"
+    case resort         = "Resort"
     case eventHallSmall = "EventHallSmall"
     case eventHallLarge = "EventHallLarge"
-    case meetingRoom = "MeetingRoom"
-    case villaEvent = "VillaEvent"
+    case meetingRoom    = "MeetingRoom"
+    case villaEvent     = "VillaEvent"
+
+    // Step 3 shows type-selection UI for these types
+    var hasTypeSelection: Bool {
+        switch self {
+        case .hotelRoom, .hotelApartment, .apartment, .resort: return true
+        default: return false
+        }
+    }
+
+    // Step 3 shows guest counter only for these types
+    var hasGuestCounter: Bool {
+        switch self {
+        case .chalet, .restHouse: return true
+        default: return false
+        }
+    }
+
+    // Step 3 is present when the type has either type-selection or guest counter
+    var hasStep3: Bool { hasTypeSelection || hasGuestCounter }
+
+    var hasUnavailableDatesStep: Bool {
+        switch self {
+        case .chalet, .restHouse, .apartment: return true
+        default: return false
+        }
+    }
+
+    // Step 4 (classification) only for these types
+    var hasClassification: Bool {
+        switch self {
+        case .hotelRoom, .resort: return true
+        default: return false
+        }
+    }
+
+    var apiEndpoint: String {
+        switch self {
+        case .hotelRoom:      return "/api/v1/HotelRoom"
+        case .hotelApartment: return "/api/v1/HotelApartment"
+        case .apartment:      return "/api/v1/Apartment"
+        case .chalet:         return "/api/v1/Chalet"
+        case .restHouse:      return "/api/v1/RestHouse"
+        case .resort:         return "/api/v1/Resort"
+        case .eventHallSmall: return "/api/v1/EventHallSmall"
+        case .eventHallLarge: return "/api/v1/EventHallLarge"
+        case .meetingRoom:    return "/api/v1/MeetingRoom"
+        case .villaEvent:     return "/api/v1/VillaEvent"
+        }
+    }
+
+    // Ordered list of steps for this sub-type
+    enum CreationStep {
+        case step1, step2, step3, step4Classification, step5Images, step6Facilities, step7UnavailableDates, step8Price
+    }
+
+    var creationSteps: [CreationStep] {
+        var steps: [CreationStep] = [.step1, .step2]
+        if hasStep3 { steps.append(.step3) }
+        if hasClassification { steps.append(.step4Classification) }
+        steps.append(.step5Images)
+        steps.append(.step6Facilities)
+        if hasUnavailableDatesStep { steps.append(.step7UnavailableDates) }
+        steps.append(.step8Price)
+        return steps
+    }
+
+    var step3Title: String {
+        switch self {
+        case .hotelRoom:      return "نوع الغرفة"
+        case .hotelApartment: return "نوع الشقة الفندقية"
+        case .apartment:      return "نوع الشقة"
+        case .resort:         return "نوع الوحدة"
+        case .chalet, .restHouse: return "عدد الضيوف"
+        default:              return "تفاصيل العقار"
+        }
+    }
 }
 
-// MARK: - Shared Form Protocol
+// MARK: - PropertyForm Protocol
 protocol PropertyForm {
     var title: String { get set }
     var description: String { get set }
@@ -25,47 +98,8 @@ protocol PropertyForm {
     var price: Double { get set }
     var discount: Double { get set }
     var videoUrl: String { get set }
+    var details: DetailsForm { get set }
     var facilities: [Facility] { get set }
     var images: [ImageUpload] { get set }
     var unavailableDates: [String] { get set }
-}
-
-//// MARK: - Specific Forms
-//struct HotelRoomForm: PropertyForm {
-//    var title: String = ""
-//    var description: String = ""
-//    var location: LocationForm = .init()
-//    var price: Double = 0
-//    var discount: Double = 0
-//    var videoUrl: String = ""
-//    var details: DetailsForm = .init()
-//    var facilities: [Facility] = []
-//    var images: [ImageUpload] = []
-//    var unavailableDates: [String] = []
-//}
-
-struct ChaletForm: PropertyForm {
-    var title: String = ""
-    var description: String = ""
-    var location: LocationForm = .init()
-    var price: Double = 0
-    var discount: Double = 0
-    var videoUrl: String = ""
-    var maxGuests: Int = 0
-    var facilities: [Facility] = []
-    var images: [ImageUpload] = []
-    var unavailableDates: [String] = []
-}
-
-struct ApartmentForm: PropertyForm {
-    var title: String = ""
-    var description: String = ""
-    var location: LocationForm = .init()
-    var price: Double = 0
-    var discount: Double = 0
-    var videoUrl: String = ""
-    var roomType: ApartmentType = .studio
-    var facilities: [Facility] = []
-    var images: [ImageUpload] = []
-    var unavailableDates: [String] = []
 }

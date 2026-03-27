@@ -2,10 +2,12 @@ import SwiftUI
 
 struct Step4View<FormData: PropertyForm>: View {
     @StateObject private var viewModel: Step4ViewModel<FormData>
+    let onBack: () -> Void
     let onNext: (FormData) -> Void
-    
-    init(form: FormData, onNext: @escaping (FormData) -> Void) {
+
+    init(form: FormData, onBack: @escaping () -> Void, onNext: @escaping (FormData) -> Void) {
         _viewModel = StateObject(wrappedValue: Step4ViewModel(form: form))
+        self.onBack = onBack
         self.onNext = onNext
     }
     
@@ -15,7 +17,7 @@ struct Step4View<FormData: PropertyForm>: View {
                 // Header
                 VStack(spacing: 0) {
                     HStack {
-                        BackButton(action: {})
+                        BackButton(action: onBack)
                         Spacer()
                         Text("اختار التصنيف")
                             .font(.title2)

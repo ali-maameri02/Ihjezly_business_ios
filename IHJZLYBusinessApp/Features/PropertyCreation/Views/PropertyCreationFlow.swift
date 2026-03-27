@@ -2,10 +2,12 @@
 import SwiftUI
 
 struct PropertyCreationFlow: View {
-    @State private var currentStep: Int = 1
+    @State private var currentIndex: Int = 0
     @State private var form = HotelRoomForm()
     @State private var isSubmitting = false
     @State private var submitError: String?
+    @State private var showSuccessAlert = false
+    @Environment(\.dismiss) private var dismiss
 
     private let propertySubType: PropertySubType
     private let locationUseCase: LocationUseCase
@@ -24,130 +26,157 @@ struct PropertyCreationFlow: View {
         self.currentUser = currentUser
     }
 
-    // Whether this property type has a classification step
-    private var hasClassification: Bool {
-        propertySubType != .chalet && propertySubType != .restHouse
-    }
+    private var steps: [PropertySubType.CreationStep] { propertySubType.creationSteps }
+    private var totalSteps: Int { steps.count }
+    private var currentStep: PropertySubType.CreationStep { steps[currentIndex] }
 
-    // Step mapping:
-    // 1 = Title/Description
-    // 2 = Location
-    // 3 = Type-specific details (room type / guest count)
-    // 4 = Classification (only if hasClassification), else skip to 5
-    // 5 = Images
-    // 6 = Facilities
-    // 7 = Unavailable Dates (all types)
-    // 8 = Price
+    private func goNext() { if currentIndex < steps.count - 1 { currentIndex += 1 } }
+    private func goBack() { if currentIndex > 0 { currentIndex -= 1 } }
 
     var body: some View {
-        Group {
-            switch currentStep {
-            case 1:
-                Step1View(
-                    form: form,
-                    locationUseCase: locationUseCase,
-                    currentUser: currentUser,
-                    onBack: nil,
-                    onNext: { updatedForm in
-                        form = updatedForm
-                        currentStep = 2
-                    }
-                )
+        VStack(spacing: 0) {
+            StepProgressBar(current: currentIndex + 1, total: totalSteps)
 
-            case 2:
-                Step2View(
-                    form: form,
-                    onNext: { location in
-                        var updatedForm = form
-                        updatedForm.location = location
-                        self.form = updatedForm
-                        currentStep = 3
+            Group {
+                switch currentStep {
+                case .step1:
+                    Step1View(
+                        form: form,
+                        locationUseCase: locationUseCase,
+                        currentUser: currentUser,
+                        onBack: { dismiss() },
+                        onNext: { updatedForm in form = updatedForm; goNext() }
+                    )
+                case .step2:
+                    Step2View(
+                        form: form,
+                        onBack: { goBack() },
+                        onNext: { location in
+                            var f = form; f.location = location; form = f
+                            goNext()
+                        }
+                    )
+                case .step3:
+                    Step3View(
+                        form: form,
+                        propertySubType: propertySubType,
+                        onBack: { goBack() },
+                        onNext: { updatedForm in form = updatedForm; goNext() }
+                    )
+                case .step4Classification:
+                    Step4View(
+                        form: form,
+                        onBack: { goBack() },
+                        onNext: { updatedForm in form = updatedForm; goNext() }
+                    )
+                case .step5Images:
+                    Step5View(
+                        form: form,
+                        onBack: { goBack() },
+                        onNext: { updatedForm in form = updatedForm; goNext() }
+                    )
+                case .step6Facilities:
+                    Step6View(
+                        form: form,
+                        onBack: { goBack() },
+                        onNext: { updatedForm in form = updatedForm; goNext() }
+                    )
+                case .step7UnavailableDates:
+                    UnavailableDatesView(
+                        form: form,
+                        onBack: { goBack() },
+                        onNext: { updatedForm in form = updatedForm; goNext() }
+                    )
+                case .step8Price:
+                    Step7View(
+                        form: form,
+                        onBack: { goBack() },
+                        onNext: { updatedForm in
+                            form = updatedForm
+                            submitForm()
+                        }
+                    )
+                    .alert("خطأ", isPresented: Binding(
+                        get: { submitError != nil },
+                        set: { _ in submitError = nil }
+                    )) {
+                        Button("موافق") {}
+                    } message: {
+                        Text(submitError ?? "")
                     }
-                )
-
-            case 3:
-                Step3View(
-                    form: form,
-                    propertySubType: propertySubType,
-                    onNext: { updatedForm in
-                        form = updatedForm
-                        currentStep = hasClassification ? 4 : 5
+                    .alert("نجاح", isPresented: $showSuccessAlert) {
+                        Button("حسناً") { dismiss() }
+                    } message: {
+                        Text("تم إضافة العقار بنجاح")
                     }
-                )
-
-            case 4:
-                Step4View(
-                    form: form,
-                    onNext: { updatedForm in
-                        form = updatedForm
-                        currentStep = 5
-                    }
-                )
-
-            case 5:
-                Step5View(
-                    form: form,
-                    onNext: { updatedForm in
-                        form = updatedForm
-                        currentStep = 6
-                    }
-                )
-
-            case 6:
-                Step6View(
-                    form: form,
-                    onNext: { updatedForm in
-                        form = updatedForm
-                        currentStep = 7
-                    }
-                )
-
-            case 7:
-                UnavailableDatesView(
-                    form: form,
-                    onBack: { currentStep = 6 },
-                    onNext: { updatedForm in
-                        form = updatedForm
-                        currentStep = 8
-                    }
-                )
-
-            case 8:
-                Step7View(
-                    form: form,
-                    onNext: { updatedForm in
-                        form = updatedForm
-                        submitForm()
-                    }
-                )
-                .alert("خطأ", isPresented: Binding(
-                    get: { self.submitError != nil },
-                    set: { _ in self.submitError = nil }
-                )) {
-                    Button("موافق") { }
-                } message: {
-                    Text(self.submitError ?? "")
+                    .disabled(isSubmitting)
                 }
-                .disabled(isSubmitting)
+            }
+            .transition(.asymmetric(
+                insertion: .move(edge: .trailing),
+                removal: .move(edge: .leading)
+            ))
+            .animation(.easeInOut(duration: 0.25), value: currentIndex)
 
-            default:
-                Text("Unknown Step")
+            if isSubmitting {
+                ZStack {
+                    Color.black.opacity(0.3).ignoresSafeArea()
+                    VStack(spacing: 16) {
+                        ProgressView().scaleEffect(1.5).tint(.white)
+                        Text("جارٍ إضافة العقار...")
+                            .foregroundColor(.white).font(.headline)
+                    }
+                    .padding(30)
+                    .background(Color(hex: "#88417A"))
+                    .cornerRadius(16)
+                }
             }
         }
+        .navigationBarHidden(true)
     }
 
     private func submitForm() {
         isSubmitting = true
         Task {
             do {
-                let propertyId = try await createUseCase.execute(form: form, propertyType: propertySubType)
-                print("✅ Property created with ID: \(propertyId)")
+                let id = try await createUseCase.execute(form: form, propertyType: propertySubType)
+                await MainActor.run {
+                    print("✅ Created: \(id)")
+                    isSubmitting = false
+                    showSuccessAlert = true
+                }
             } catch {
                 await MainActor.run {
-                    self.submitError = "فشل إنشاء العقار: \(error.localizedDescription)"
+                    submitError = "فشل إنشاء العقار: \(error.localizedDescription)"
+                    isSubmitting = false
                 }
             }
-            isSubmitting = false
         }
+    }
+}
+
+// MARK: - Progress Bar
+struct StepProgressBar: View {
+    let current: Int
+    let total: Int
+    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+
+    var body: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 4) {
+                ForEach(1...total, id: \.self) { step in
+                    Capsule()
+                        .fill(step <= current ? brand : Color.gray.opacity(0.25))
+                        .frame(height: 4)
+                        .animation(.easeInOut(duration: 0.3), value: current)
+                }
+            }
+            .padding(.horizontal, 16)
+            Text("الخطوة \(current) من \(total)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding(.vertical, 10)
+        .background(Color(.systemBackground))
     }
 }

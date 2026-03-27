@@ -55,6 +55,19 @@ final class Step5ViewModel<FormData: PropertyForm>: ObservableObject {
         form.videoUrl = videoUrl
     }
 
+    func pickImages() {
+        ImagePicker.shared.selectImage(multiple: true) { [weak self] base64, imageData in
+            guard let self = self else { return }
+            if let range = base64.range(of: ",") {
+                let raw = String(base64[range.upperBound...])
+                self.rawBase64Images.append(raw)
+                if let data = imageData { self.imageDataList.append(data) }
+                if self.mainImageIndex == nil { self.mainImageIndex = 0 }
+            }
+            self.validate()
+        }
+    }
+
     func selectMainImage() {
         ImagePicker.shared.selectImage { [weak self] base64, imageData in
             guard let self = self else { return }

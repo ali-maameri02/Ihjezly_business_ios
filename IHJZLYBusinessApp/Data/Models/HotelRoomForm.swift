@@ -1,6 +1,5 @@
-// Domain/Models/HotelRoomForm.swift
+// Data/Models/HotelRoomForm.swift
 import Foundation
-
 
 struct HotelRoomForm: PropertyForm {
     var title: String = ""
@@ -11,7 +10,7 @@ struct HotelRoomForm: PropertyForm {
     var videoUrl: String = ""
     var details: DetailsForm = .init()
     var facilities: [Facility] = []
-    var images: [ImageUpload] = [] // Keep as ImageUpload
+    var images: [ImageUpload] = []
     var unavailableDates: [String] = []
 }
 
@@ -22,11 +21,23 @@ struct LocationForm {
     var longitude: Double = 0
 }
 
+// Single DetailsForm covering all property types
 struct DetailsForm {
-    var numberOfAdults: Int = 0
+    // Shared
+    var numberOfAdults: Int = 1
     var numberOfChildren: Int = 0
-    var hotelRoomType: HotelRoomType = .singleRoom
+    var maxGuests: Int = 0
     var classification: Classification = .none
+
+    // HotelRoom
+    var hotelRoomType: HotelRoomType = .singleRoom
+
+    // HotelApartment
+    var hotelApartmentType: HotelApartmentType? = nil
+
+    // Apartment
+    var apartmentType: ApartmentType? = nil
+
+    // Resort
+    var resortType: ResortsType? = nil
 }
-
-
