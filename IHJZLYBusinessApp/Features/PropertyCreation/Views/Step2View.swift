@@ -1,58 +1,124 @@
 import SwiftUI
 import MapKit
+import WebKit
 
-// MARK: - Interactive MKMapView wrapper
-struct InteractiveMapView: UIViewRepresentable {
+// MARK: - OpenStreetMap via Leaflet (full Libya coverage)
+struct OSMMapView: UIViewRepresentable {
     @Binding var region: MKCoordinateRegion
     @Binding var selectedPin: IdentifiablePin?
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
-    func makeUIView(context: Context) -> MKMapView {
-        let map = MKMapView()
-        map.isScrollEnabled = true
-        map.isZoomEnabled = true
-        map.isRotateEnabled = true
-        map.isUserInteractionEnabled = true
-        map.delegate = context.coordinator
-        map.setRegion(region, animated: false)
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.userContentController.add(context.coordinator, name: "mapTap")
+        config.userContentController.add(context.coordinator, name: "mapMove")
 
-        let tap = UITapGestureRecognizer(target: context.coordinator,
-                                         action: #selector(Coordinator.handleTap(_:)))
-        map.addGestureRecognizer(tap)
-        return map
+        let web = WKWebView(frame: .zero, configuration: config)
+        web.scrollView.isScrollEnabled = false
+        web.isOpaque = false
+        web.backgroundColor = .clear
+        web.navigationDelegate = context.coordinator
+        web.loadHTMLString(Self.html(lat: region.center.latitude,
+                                     lon: region.center.longitude,
+                                     zoom: 6), baseURL: URL(string: "https://www.openstreetmap.org"))
+        return web
     }
 
-    func updateUIView(_ map: MKMapView, context: Context) {
-        // Sync pin annotation
-        map.removeAnnotations(map.annotations)
+    func updateUIView(_ web: WKWebView, context: Context) {
         if let pin = selectedPin {
-            let annotation = MKPointAnnotation()
-            annotation.coordinate = pin.coordinate
-            map.addAnnotation(annotation)
+            let js = "setPin(\(pin.coordinate.latitude), \(pin.coordinate.longitude));"
+            web.evaluateJavaScript(js, completionHandler: nil)
+        } else {
+            web.evaluateJavaScript("removePin();", completionHandler: nil)
         }
     }
 
-    class Coordinator: NSObject, MKMapViewDelegate {
-        var parent: InteractiveMapView
-        init(_ parent: InteractiveMapView) { self.parent = parent }
+    // MARK: Coordinator
+    class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
+        var parent: OSMMapView
+        init(_ parent: OSMMapView) { self.parent = parent }
 
-        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
-            guard let map = gesture.view as? MKMapView else { return }
-            let point = gesture.location(in: map)
-            let coordinate = map.convert(point, toCoordinateFrom: map)
-            parent.selectedPin = IdentifiablePin(coordinate: coordinate)
+        func userContentController(_ controller: WKUserContentController,
+                                   didReceive message: WKScriptMessage) {
+            guard let body = message.body as? [String: Double] else { return }
+            let lat = body["lat"] ?? 0
+            let lon = body["lon"] ?? 0
+            if message.name == "mapTap" {
+                parent.selectedPin = IdentifiablePin(
+                    coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                )
+            } else if message.name == "mapMove" {
+                let latDelta = body["latDelta"] ?? 1
+                let lonDelta = body["lonDelta"] ?? 1
+                parent.region = MKCoordinateRegion(
+                    center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                    span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
+                )
+            }
         }
+    }
 
-        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-            let view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: "pin")
-            view.markerTintColor = UIColor(red: 0x88/255, green: 0x41/255, blue: 0x7A/255, alpha: 1)
-            return view
-        }
+    // MARK: Leaflet HTML
+    static func html(lat: Double, lon: Double, zoom: Int) -> String {
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <style>
+          * { margin:0; padding:0; box-sizing:border-box; }
+          html, body, #map { width:100%; height:100%; }
+        </style>
+        </head>
+        <body>
+        <div id="map"></div>
+        <script>
+          var map = L.map('map', {
+            center: [\(lat), \(lon)],
+            zoom: \(zoom),
+            zoomControl: true,
+            attributionControl: false
+          });
 
-        func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-            parent.region = mapView.region
-        }
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            minZoom: 1
+          }).addTo(map);
+
+          var marker = null;
+
+          function setPin(lat, lon) {
+            if (marker) { map.removeLayer(marker); }
+            marker = L.marker([lat, lon]).addTo(map);
+          }
+
+          function removePin() {
+            if (marker) { map.removeLayer(marker); marker = null; }
+          }
+
+          map.on('click', function(e) {
+            window.webkit.messageHandlers.mapTap.postMessage({
+              lat: e.latlng.lat, lon: e.latlng.lng
+            });
+            setPin(e.latlng.lat, e.latlng.lng);
+          });
+
+          map.on('moveend', function() {
+            var c = map.getCenter();
+            var b = map.getBounds();
+            window.webkit.messageHandlers.mapMove.postMessage({
+              lat: c.lat, lon: c.lng,
+              latDelta: b.getNorth() - b.getSouth(),
+              lonDelta: b.getEast()  - b.getWest()
+            });
+          });
+        </script>
+        </body>
+        </html>
+        """
     }
 }
 
@@ -99,8 +165,8 @@ struct Step2View<FormData: PropertyForm>: View {
                     .foregroundColor(.secondary)
                     .padding(.vertical, 8)
 
-                // Fully interactive map
-                InteractiveMapView(
+                // Fully interactive OpenStreetMap
+                OSMMapView(
                     region: $viewModel.region,
                     selectedPin: $viewModel.selectedPin
                 )

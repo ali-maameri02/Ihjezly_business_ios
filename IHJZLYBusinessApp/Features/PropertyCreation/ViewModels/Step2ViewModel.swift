@@ -12,12 +12,12 @@ final class Step2ViewModel<FormData: PropertyForm>: ObservableObject {
     init(form: FormData) {
         self.form = form
         let coordinate = CLLocationCoordinate2D(
-            latitude: form.location.latitude != 0 ? form.location.latitude : 32.8872,
-            longitude: form.location.longitude != 0 ? form.location.longitude : 13.1913
+            latitude: form.location.latitude != 0 ? form.location.latitude : 26.3351,
+            longitude: form.location.longitude != 0 ? form.location.longitude : 17.2283
         )
         self.region = MKCoordinateRegion(
             center: coordinate,
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            span: MKCoordinateSpan(latitudeDelta: 15.0, longitudeDelta: 15.0)
         )
         if form.location.latitude != 0 && form.location.longitude != 0 {
             self.selectedPin = IdentifiablePin(coordinate: coordinate)
