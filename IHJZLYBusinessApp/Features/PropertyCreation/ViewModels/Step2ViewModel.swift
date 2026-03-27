@@ -24,17 +24,6 @@ final class Step2ViewModel<FormData: PropertyForm>: ObservableObject {
         }
     }
 
-    // Convert a tap point (CGPoint) inside a view of given size to a map coordinate
-    func coordinate(for point: CGPoint, in size: CGSize) -> CLLocationCoordinate2D {
-        let latDelta = region.span.latitudeDelta
-        let lonDelta = region.span.longitudeDelta
-
-        let lat = region.center.latitude  + latDelta  * (0.5 - Double(point.y / size.height))
-        let lon = region.center.longitude + lonDelta  * (Double(point.x / size.width) - 0.5)
-
-        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
-    }
-
     func placePin(at coordinate: CLLocationCoordinate2D) {
         selectedPin = IdentifiablePin(coordinate: coordinate)
     }

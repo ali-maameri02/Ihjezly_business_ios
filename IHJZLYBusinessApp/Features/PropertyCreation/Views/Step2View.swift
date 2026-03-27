@@ -1,6 +1,62 @@
 import SwiftUI
 import MapKit
 
+// MARK: - Interactive MKMapView wrapper
+struct InteractiveMapView: UIViewRepresentable {
+    @Binding var region: MKCoordinateRegion
+    @Binding var selectedPin: IdentifiablePin?
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> MKMapView {
+        let map = MKMapView()
+        map.isScrollEnabled = true
+        map.isZoomEnabled = true
+        map.isRotateEnabled = true
+        map.isUserInteractionEnabled = true
+        map.delegate = context.coordinator
+        map.setRegion(region, animated: false)
+
+        let tap = UITapGestureRecognizer(target: context.coordinator,
+                                         action: #selector(Coordinator.handleTap(_:)))
+        map.addGestureRecognizer(tap)
+        return map
+    }
+
+    func updateUIView(_ map: MKMapView, context: Context) {
+        // Sync pin annotation
+        map.removeAnnotations(map.annotations)
+        if let pin = selectedPin {
+            let annotation = MKPointAnnotation()
+            annotation.coordinate = pin.coordinate
+            map.addAnnotation(annotation)
+        }
+    }
+
+    class Coordinator: NSObject, MKMapViewDelegate {
+        var parent: InteractiveMapView
+        init(_ parent: InteractiveMapView) { self.parent = parent }
+
+        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
+            guard let map = gesture.view as? MKMapView else { return }
+            let point = gesture.location(in: map)
+            let coordinate = map.convert(point, toCoordinateFrom: map)
+            parent.selectedPin = IdentifiablePin(coordinate: coordinate)
+        }
+
+        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            let view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: "pin")
+            view.markerTintColor = UIColor(red: 0x88/255, green: 0x41/255, blue: 0x7A/255, alpha: 1)
+            return view
+        }
+
+        func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            parent.region = mapView.region
+        }
+    }
+}
+
+// MARK: - Step2View
 struct Step2View<FormData: PropertyForm>: View {
     @StateObject private var viewModel: Step2ViewModel<FormData>
     let onBack: () -> Void
@@ -43,28 +99,11 @@ struct Step2View<FormData: PropertyForm>: View {
                     .foregroundColor(.secondary)
                     .padding(.vertical, 8)
 
-                // Map with tap gesture
-                ZStack {
-                    Map(
-                        coordinateRegion: $viewModel.region,
-                        annotationItems: viewModel.selectedPin.map { [$0] } ?? []
-                    ) { pin in
-                        MapMarker(coordinate: pin.coordinate, tint: Color(hex: "#88417A"))
-                    }
-
-                    // Transparent overlay to capture taps
-                    GeometryReader { geo in
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .onTapGesture { location in
-                                let coordinate = viewModel.coordinate(
-                                    for: location,
-                                    in: geo.size
-                                )
-                                viewModel.placePin(at: coordinate)
-                            }
-                    }
-                }
+                // Fully interactive map
+                InteractiveMapView(
+                    region: $viewModel.region,
+                    selectedPin: $viewModel.selectedPin
+                )
                 .frame(maxHeight: .infinity)
 
                 // Selected coordinates display
