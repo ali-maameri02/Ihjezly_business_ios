@@ -7,7 +7,7 @@ struct CategoryRadioView: View {
     
     var body: some View {
         HStack {
-            Button("مناسبات") {
+            Button("قاعات مناسبات") {
                 selectedCategory = .events
             }
             .buttonStyle(CategoryButtonStyle(isSelected: selectedCategory == .events))

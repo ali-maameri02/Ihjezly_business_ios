@@ -23,7 +23,7 @@ class ValidationManager {
             errors.append(ValidationError(message: "يرجى اختيار الحي"))
         }
         
-        if form.description.count < 10 {
+        if form.description.trimmingCharacters(in: .whitespaces).count < 10 {
             errors.append(ValidationError(message: "وصف العقار يجب أن يحتوي على 10 أحرف على الأقل"))
         }
         

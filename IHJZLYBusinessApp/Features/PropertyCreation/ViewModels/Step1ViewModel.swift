@@ -91,11 +91,11 @@ class Step1ViewModel<FormData: PropertyForm>: ObservableObject {
     
     func validate() {
         validationErrors = []
-        if form.title.isEmpty {
+        if form.title.trimmingCharacters(in: .whitespaces).isEmpty {
             validationErrors.append(ValidationError(message: "اسم العقار مطلوب"))
         }
-        if form.description.isEmpty {
-            validationErrors.append(ValidationError(message: "وصف العقار مطلوب"))
+        if form.description.trimmingCharacters(in: .whitespaces).count < 10 {
+            validationErrors.append(ValidationError(message: "وصف العقار يجب أن يحتوي على 10 أحرف على الأقل"))
         }
         if form.location.state.isEmpty {
             validationErrors.append(ValidationError(message: "المدينة مطلوبة"))
