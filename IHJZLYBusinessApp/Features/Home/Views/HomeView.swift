@@ -34,7 +34,7 @@ struct HomeView: View {
                         if selectedTab == .units {
                             StaticUnitCardsGrid(category: selectedCategory)
                         } else {
-                            AdPackagesGrid()
+                            AddAdView()
                         }
                         
                         Spacer(minLength: 20)

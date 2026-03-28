@@ -133,4 +133,33 @@ final class APIClient {
     func get<T: Decodable>(to endpoint: String) async throws -> T {
         return try await request(endpoint, method: .get)
     }
+
+    func postRaw(
+        to endpoint: String,
+        body: Data,
+        contentType: String,
+        method: String = "POST"
+    ) async throws -> (Data, URLResponse) {
+        var urlComponents = URLComponents(url: baseURL, resolvingAgainstBaseURL: true)!
+        urlComponents.path = endpoint
+        guard let url = urlComponents.url else { throw APIError.invalidResponse }
+        var req = URLRequest(url: url)
+        req.httpMethod = method
+        req.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        req.setValue("*/*", forHTTPHeaderField: "accept")
+        defaultHeaders.forEach { req.setValue($1, forHTTPHeaderField: $0) }
+        req.httpBody = body
+        return try await URLSession.shared.data(for: req)
+    }
+
+    func patchRaw(to endpoint: String) async throws -> (Data, URLResponse) {
+        var urlComponents = URLComponents(url: baseURL, resolvingAgainstBaseURL: true)!
+        urlComponents.path = endpoint
+        guard let url = urlComponents.url else { throw APIError.invalidResponse }
+        var req = URLRequest(url: url)
+        req.httpMethod = "PATCH"
+        req.setValue("*/*", forHTTPHeaderField: "accept")
+        defaultHeaders.forEach { req.setValue($1, forHTTPHeaderField: $0) }
+        return try await URLSession.shared.data(for: req)
+    }
 }

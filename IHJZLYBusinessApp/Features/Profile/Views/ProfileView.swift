@@ -150,91 +150,477 @@ struct AccountInfoView: View {
 
 struct MyPropertiesView: View {
     @StateObject private var viewModel = MyPropertiesViewModel()
-    
+    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+
     var body: some View {
-        Group {
+        ZStack {
+            Color(.systemGroupedBackground).ignoresSafeArea()
+
             if viewModel.isLoading {
                 ProgressView("جارٍ التحميل...")
-            } else if viewModel.properties.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "building.2")
-                        .font(.system(size: 60))
-                        .foregroundColor(.gray)
-                    Text("لا توجد عقارات")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(viewModel.properties) { property in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(property.title)
-                            .font(.headline)
-                        Text(property.location.city)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        HStack {
-                            Text("\(property.price, specifier: "%.0f") د.ل")
-                                .font(.subheadline)
-                                .foregroundColor(Color(hex: "#88417A"))
-                            Spacer()
-                            Text("نشط")
-                                .font(.caption)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.green.opacity(0.2))
-                                .foregroundColor(.green)
-                                .cornerRadius(8)
+                ScrollView {
+                    VStack(spacing: 16) {
+
+                        // MARK: Subscription status banner
+                        subscriptionBanner
+
+                        // MARK: Properties list
+                        if viewModel.properties.isEmpty {
+                            VStack(spacing: 16) {
+                                Image(systemName: "building.2")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.gray)
+                                Text("لا توجد عقارات")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 60)
+                        } else {
+                            ForEach(viewModel.properties) { property in
+                                PropertyCard(property: property, brand: brand)
+                                    .padding(.horizontal, 16)
+                            }
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 16)
                 }
+            }
+
+            // MARK: Subscribing overlay
+            if viewModel.isSubscribing {
+                Color.black.opacity(0.35).ignoresSafeArea()
+                VStack(spacing: 16) {
+                    ProgressView().scaleEffect(1.4).tint(.white)
+                    Text("جارٍ معالجة الاشتراك...")
+                        .foregroundColor(.white)
+                        .font(.headline)
+                }
+                .padding(30)
+                .background(brand)
+                .cornerRadius(16)
             }
         }
         .navigationTitle("عقاراتي")
-        .onAppear {
-            viewModel.loadProperties()
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await viewModel.load() }
+        // MARK: Plan picker sheet
+        .sheet(isPresented: $viewModel.showPlansSheet) {
+            PlansSheet(viewModel: viewModel, brand: brand)
+        }
+        // MARK: Confirm dialog
+        .confirmationDialog(
+            viewModel.selectedPlan.map { "الاشتراك في \"\($0.name)\"" } ?? "تأكيد الاشتراك",
+            isPresented: $viewModel.showConfirmDialog,
+            titleVisibility: .visible
+        ) {
+            Button("تأكيد — خصم \(viewModel.selectedPlan?.formattedPrice ?? "")") {
+                Task { await viewModel.subscribe() }
+            }
+            Button("إلغاء", role: .cancel) {}
+        } message: {
+            Text("سيتم خصم المبلغ من رصيد محفظتك مباشرةً")
+        }
+        // MARK: Error alert
+        .alert("خطأ", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { if !$0 { viewModel.errorMessage = nil } }
+        )) {
+            Button("حسناً") { viewModel.errorMessage = nil }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
+        // MARK: Success alert
+        .alert("تم بنجاح ✓", isPresented: Binding(
+            get: { viewModel.successMessage != nil },
+            set: { if !$0 { viewModel.successMessage = nil } }
+        )) {
+            Button("حسناً") { viewModel.successMessage = nil }
+        } message: {
+            Text(viewModel.successMessage ?? "")
+        }
+    }
+
+    // MARK: Subscription banner
+    @ViewBuilder
+    private var subscriptionBanner: some View {
+        if let active = viewModel.activeSubscription {
+            // Active subscription summary
+            VStack(spacing: 0) {
+                HStack {
+                    Image(systemName: "checkmark.seal.fill")
+                    Text("اشتراك نشط — \(active.formattedEndDate)")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    Spacer()
+                    Button("تجديد") { viewModel.showPlansSheet = true }
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(brand.opacity(0.8))
+                        .cornerRadius(8)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(brand)
+
+                HStack(spacing: 0) {
+                    Label("\(active.usedAds) مستخدم", systemImage: "megaphone.fill")
+                        .font(.caption)
+                        .frame(maxWidth: .infinity)
+                    Divider().frame(height: 20)
+                    Label("\(active.remainingAds) متبقي", systemImage: "star.fill")
+                        .font(.caption)
+                        .frame(maxWidth: .infinity)
+                    Divider().frame(height: 20)
+                    Label("\(active.maxAds) إجمالي", systemImage: "list.number")
+                        .font(.caption)
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.vertical, 8)
+                .background(Color.white)
+            }
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.07), radius: 4, x: 0, y: 2)
+            .padding(.horizontal, 16)
+        } else {
+            // No subscription — prompt to subscribe
+            HStack(spacing: 12) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("لا يوجد اشتراك نشط")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    Text("اشترك لتفعيل ميزة الإعلانات على عقاراتك")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button("اشترك") { viewModel.showPlansSheet = true }
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(brand)
+                    .cornerRadius(10)
+            }
+            .padding(14)
+            .background(Color.orange.opacity(0.07))
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.3), lineWidth: 1))
+            .padding(.horizontal, 16)
         }
     }
 }
 
-@MainActor
-class MyPropertiesViewModel: ObservableObject {
-    @Published var properties: [PropertyResponse] = []
-    @Published var isLoading = false
-    
-    func loadProperties() {
-        isLoading = true
-        
-        Task {
-            do {
-                let useCase = GetAllPropertiesUseCase()
-                let allProperties = try await useCase.execute()
-                self.properties = allProperties.map { prop in
-                    PropertyResponse(
-                        id: prop.id,
-                        title: prop.title,
-                        price: prop.price ?? 0,
-                        location: PropertyLocation(city: "طرابلس", state: "ليبيا")
-                    )
-                }
-                self.isLoading = false
-            } catch {
-                self.isLoading = false
+// MARK: - Property card
+private struct PropertyCard: View {
+    let property: MyProperty
+    let brand: Color
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 10) {
+            HStack {
+                // Status badge
+                Text(property.statusLabel)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(property.statusColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(property.statusColor.opacity(0.12))
+                    .cornerRadius(6)
+                Spacer()
+                Text(property.title)
+                    .font(.headline)
+                    .multilineTextAlignment(.trailing)
+            }
+
+            HStack {
+                Text("\(property.price, specifier: "%.0f") \(property.currency == "LYD" ? "د.ل" : property.currency)")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(brand)
+                Spacer()
+                Label("\(property.location.city)، \(property.location.state)", systemImage: "mappin.circle.fill")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            if property.isAd {
+                Label("معلن", systemImage: "megaphone.fill")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(brand)
+                    .cornerRadius(6)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
+        .padding(14)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
     }
 }
 
-struct PropertyResponse: Identifiable, Codable {
+// MARK: - Plans bottom sheet
+private struct PlansSheet: View {
+    @ObservedObject var viewModel: MyPropertiesViewModel
+    let brand: Color
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    if viewModel.plans.isEmpty {
+                        ProgressView("جارٍ تحميل الخطط...")
+                            .padding(.top, 60)
+                    } else {
+                        ForEach(viewModel.plans) { plan in
+                            PlanRow(
+                                plan: plan,
+                                isCurrentPlan: viewModel.activeSubscription?.planId == plan.id,
+                                brand: brand
+                            ) {
+                                viewModel.showPlansSheet = false
+                                viewModel.selectedPlan = plan
+                                viewModel.showConfirmDialog = true
+                            }
+                            .padding(.horizontal, 16)
+                        }
+                    }
+                }
+                .padding(.vertical, 16)
+            }
+            .navigationTitle("خطط الاشتراك")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("إغلاق") { viewModel.showPlansSheet = false }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}
+
+private struct PlanRow: View {
+    let plan: SubscriptionPlan
+    let isCurrentPlan: Bool
+    let brand: Color
+    let onTap: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .trailing, spacing: 6) {
+                HStack {
+                    if isCurrentPlan {
+                        Text("حالي")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.green)
+                            .cornerRadius(4)
+                    }
+                    Spacer()
+                    Text(plan.name)
+                        .font(.headline)
+                }
+                HStack(spacing: 16) {
+                    Label(plan.formattedDuration, systemImage: "clock")
+                    Label("\(plan.maxAds) إعلان", systemImage: "megaphone")
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+            Spacer()
+            Button(action: onTap) {
+                Text(isCurrentPlan ? "تجديد" : "اشترك")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(isCurrentPlan ? Color.green : brand)
+                    .cornerRadius(10)
+            }
+        }
+        .padding(14)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.06), radius: 3, x: 0, y: 1)
+    }
+}
+
+// MARK: - MyProperty model (maps PropertyDto)
+struct MyProperty: Identifiable {
     let id: String
     let title: String
     let price: Double
-    let location: PropertyLocation
+    let currency: String
+    let isAd: Bool
+    let status: String
+    let location: MyPropertyLocation
+
+    var statusLabel: String {
+        switch status {
+        case "Pending":  return "قيد المراجعة"
+        case "Accepted": return "مقبول"
+        case "Refused":  return "مرفوض"
+        default:         return status
+        }
+    }
+
+    var statusColor: Color {
+        switch status {
+        case "Accepted": return .green
+        case "Refused":  return .red
+        default:         return .orange
+        }
+    }
 }
 
-struct PropertyLocation: Codable {
+struct MyPropertyLocation: Codable {
     let city: String
     let state: String
+}
+
+// MARK: - MyPropertiesViewModel
+@MainActor
+final class MyPropertiesViewModel: ObservableObject {
+    @Published var properties: [MyProperty] = []
+    @Published var plans: [SubscriptionPlan] = []
+    @Published var activeSubscription: ActiveSubscription? = nil
+    @Published var selectedPlan: SubscriptionPlan? = nil
+    @Published var isLoading = false
+    @Published var isSubscribing = false
+    @Published var showPlansSheet = false
+    @Published var showConfirmDialog = false
+    @Published var errorMessage: String? = nil
+    @Published var successMessage: String? = nil
+
+    private let apiClient: APIClient
+    private let subscriptionService: SubscriptionService
+
+    init() {
+        let client = APIClient(baseURLString: "http://31.220.56.155:5050")
+        if let token = UserDefaults.standard.string(forKey: "auth_token") {
+            client.defaultHeaders["Authorization"] = "Bearer \(token)"
+        }
+        self.apiClient = client
+        self.subscriptionService = SubscriptionService(apiClient: client)
+    }
+
+    func load() async {
+        isLoading = true
+        errorMessage = nil
+        guard let userId = currentUserId() else {
+            errorMessage = "تعذّر تحديد هوية المستخدم"
+            isLoading = false
+            return
+        }
+        async let propsTask: [MyProperty] = fetchProperties(ownerId: userId)
+        async let plansTask: [SubscriptionPlan] = (try? subscriptionService.fetchPlans()) ?? []
+        async let activeTask: ActiveSubscription? = try? subscriptionService.fetchActiveSubscription(userId: userId)
+        let (props, fetchedPlans, active) = await (propsTask, plansTask, activeTask)
+        properties = props
+        plans = fetchedPlans.filter { $0.isActive }
+        activeSubscription = active
+        isLoading = false
+    }
+
+    func subscribe() async {
+        guard let plan = selectedPlan, let userId = currentUserId() else { return }
+        isSubscribing = true
+        errorMessage = nil
+        do {
+            if let active = activeSubscription {
+                try await subscriptionService.renew(subscriptionId: active.id, planId: plan.id)
+                successMessage = "تم تجديد الاشتراك في \"\(plan.name)\" بنجاح"
+            } else {
+                _ = try await subscriptionService.subscribe(businessOwnerId: userId, planId: plan.id)
+                successMessage = "تم الاشتراك في \"\(plan.name)\" بنجاح"
+            }
+            await load()
+        } catch APIError.badRequest(let msg) {
+            errorMessage = msg.contains("Insufficient")
+                ? "رصيد المحفظة غير كافٍ لإتمام الاشتراك"
+                : msg
+        } catch {
+            errorMessage = "فشل إتمام الاشتراك، يرجى المحاولة مجدداً"
+        }
+        isSubscribing = false
+    }
+
+    // MARK: Private helpers
+    private func currentUserId() -> String? {
+        guard let token = UserDefaults.standard.string(forKey: "auth_token"),
+              let payload = decodeJWTPayload(token),
+              let sub = payload["sub"] as? String ?? payload["nameid"] as? String
+        else { return nil }
+        return sub
+    }
+
+    private func fetchProperties(ownerId: String) async -> [MyProperty] {
+        struct RawLocation: Codable { let city: String; let state: String }
+        struct RawProperty: Codable {
+            let id: String
+            let title: String
+            let price: Double
+            let currency: String
+            let isAd: Bool
+            let status: String
+            let location: RawLocation
+            enum CodingKeys: String, CodingKey {
+                case id = "id"
+                case title, price = "price", currency, isAd, status, location
+            }
+        }
+        do {
+            let raw: [RawProperty] = try await apiClient.get(
+                to: "/api/v1/AllProperties/by-owner/\(ownerId)"
+            )
+            return raw.map {
+                MyProperty(
+                    id: $0.id,
+                    title: $0.title,
+                    price: $0.price,
+                    currency: $0.currency,
+                    isAd: $0.isAd,
+                    status: $0.status,
+                    location: MyPropertyLocation(city: $0.location.city, state: $0.location.state)
+                )
+            }
+        } catch {
+            return []
+        }
+    }
+
+    private func decodeJWTPayload(_ token: String) -> [String: Any]? {
+        let parts = token.components(separatedBy: ".")
+        guard parts.count == 3 else { return nil }
+        var base64 = parts[1]
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let remainder = base64.count % 4
+        if remainder > 0 { base64 += String(repeating: "=", count: 4 - remainder) }
+        guard let data = Data(base64Encoded: base64),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        return json
+    }
 }
 
 struct NotificationsView: View {
