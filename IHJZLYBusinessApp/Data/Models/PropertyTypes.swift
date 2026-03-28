@@ -68,7 +68,10 @@ enum PropertySubType: String, CaseIterable {
     }
 
     var isEventHall: Bool {
-        self == .eventHallSmall || self == .eventHallLarge
+        switch self {
+        case .eventHallSmall, .eventHallLarge, .meetingRoom, .villaEvent: return true
+        default: return false
+        }
     }
 
     // Ordered list of steps for this sub-type
@@ -100,7 +103,7 @@ enum PropertySubType: String, CaseIterable {
         case .resort:         return "نوع الوحدة"
         case .chalet:         return "عدد الضيوف"
         case .restHouse:      return "عدد الضيوف"
-        case .eventHallSmall, .eventHallLarge: return "الضيوف والمميزات"
+        case .eventHallSmall, .eventHallLarge, .meetingRoom, .villaEvent: return "الضيوف والمميزات"
         default:              return "تفاصيل العقار"
         }
     }

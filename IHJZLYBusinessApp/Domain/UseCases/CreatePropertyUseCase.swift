@@ -72,7 +72,7 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
             fields["Details.type"]             = (form.details.resortType ?? .studio).rawValue
             fields["Details.clasification"]    = form.details.classification.rawValue
 
-        case .eventHallSmall, .eventHallLarge:
+        case .eventHallSmall, .eventHallLarge, .meetingRoom, .villaEvent:
             fields["Type"] = "Hall"
             fields["Details.NumberOfGuests"] = "\(form.details.maxGuests)"
             for (i, feature) in form.features.enumerated() {
