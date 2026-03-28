@@ -41,7 +41,49 @@ struct TransactionDto: Identifiable, Codable {
     }
 }
 
-// MARK: - ViewModel
+// WithdrawDto — mirrors backend WithdrawDto exactly
+struct WithdrawDto: Identifiable, Codable {
+    let id: String
+    let walletId: String
+    let amount: Double
+    let currencyCode: String
+    let bankAccountHolderName: String
+    let bankName: String
+    let accountNumber: String
+    let description: String?
+    let requestedAt: String
+    let processedAt: String?
+    let status: Int   // 0=Pending, 1=Approved, 2=Rejected
+
+    var statusLabel: String {
+        switch status {
+        case 1: return "مقبول"
+        case 2: return "مرفوض"
+        default: return "قيد المراجعة"
+        }
+    }
+
+    var statusColor: SwiftUI.Color {
+        switch status {
+        case 1: return .green
+        case 2: return .red
+        default: return .orange
+        }
+    }
+
+    var formattedAmount: String {
+        String(format: "%.2f %@", amount, currencyCode == "LYD" ? "د.ل" : currencyCode)
+    }
+
+    var formattedDate: String {
+        let f1 = ISO8601DateFormatter(); f1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let f2 = ISO8601DateFormatter(); f2.formatOptions = [.withInternetDateTime]
+        guard let date = f1.date(from: requestedAt) ?? f2.date(from: requestedAt) else { return requestedAt }
+        let df = DateFormatter(); df.dateStyle = .medium
+        df.locale = Locale(identifier: "ar")
+        return df.string(from: date)
+    }
+}
 
 @MainActor
 final class WalletViewModel: ObservableObject {
@@ -65,6 +107,11 @@ final class WalletViewModel: ObservableObject {
 
     // Prepaid state
     @Published var prepaidIsLoading = false
+
+    // Withdraw state
+    @Published var withdrawIsLoading = false
+    @Published var withdrawHistory: [WithdrawDto] = []
+    @Published var withdrawHistoryLoading = false
 
     private func makeClient() -> APIClient {
         let client = APIClient(baseURLString: "http://31.220.56.155:5050")
@@ -295,6 +342,76 @@ final class WalletViewModel: ObservableObject {
             successMessage = "تم شحن المحفظة عبر ماصرات بنجاح ✓"
             await fetchAll()
         } catch { errorMessage = apiErrorMessage(error) }
+    }
+
+    // MARK: - Withdraw
+    // POST /api/v1/Withdraw
+    // body: { Amount, CurrencyCode, AccountHolderName, BankName, AccountNumber, Description }
+    // UserId is taken from JWT by the backend — not sent in body
+    // Returns 201 { withdrawId } on success, 400 { code, message } on insufficient balance
+    func createWithdraw(
+        amount: Double,
+        accountHolderName: String,
+        bankName: String,
+        accountNumber: String,
+        description: String?
+    ) async {
+        withdrawIsLoading = true
+        defer { withdrawIsLoading = false }
+
+        struct Body: Encodable {
+            let Amount: Double
+            let CurrencyCode: String
+            let AccountHolderName: String
+            let BankName: String
+            let AccountNumber: String
+            let Description: String?
+        }
+        do {
+            let body = try JSONEncoder().encode(Body(
+                Amount: amount,
+                CurrencyCode: "LYD",
+                AccountHolderName: accountHolderName,
+                BankName: bankName,
+                AccountNumber: accountNumber,
+                Description: description
+            ))
+            let (data, response) = try await makeClient().postRaw(
+                to: "/api/v1/Withdraw",
+                body: body,
+                contentType: "application/json"
+            )
+            try assertSuccess(data: data, response: response)
+            successMessage = "تم تقديم طلب السحب بنجاح ✓ سيتم مراجعته من قبل الإدارة"
+            await fetchAll()
+        } catch {
+            errorMessage = apiErrorMessage(error)
+        }
+    }
+
+    // GET /api/v1/Withdraw/user/{userId}
+    func fetchWithdrawHistory() async {
+        guard let userId = currentUserId() else { return }
+        withdrawHistoryLoading = true
+        defer { withdrawHistoryLoading = false }
+        do {
+            // Backend returns Result<List<WithdrawDto>> wrapped — unwrap value key
+            struct Wrapper: Decodable { let value: [WithdrawDto]? }
+            let (data, response) = try await makeClient().postRaw(
+                to: "/api/v1/Withdraw/user/\(userId)",
+                body: Data(),
+                contentType: "application/json",
+                method: "GET"
+            )
+            if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
+                // Try direct array first, then wrapped
+                if let direct = try? JSONDecoder().decode([WithdrawDto].self, from: data) {
+                    withdrawHistory = direct
+                } else if let wrapped = try? JSONDecoder().decode(Wrapper.self, from: data) {
+                    withdrawHistory = wrapped.value ?? []
+                }
+            }
+        } catch { /* silently ignore — history is optional */ }
     }
 
     // MARK: - Helpers

@@ -8,6 +8,7 @@ private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
 struct WalletView: View {
     @StateObject private var vm = WalletViewModel()
     @State private var showPaymentSheet = false
+    @State private var showWithdrawSheet = false
 
     var body: some View {
         NavigationStack {
@@ -20,9 +21,11 @@ struct WalletView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 16) {
-                            BalanceCard(wallet: vm.wallet) {
-                                showPaymentSheet = true
-                            }
+                            BalanceCard(
+                                wallet: vm.wallet,
+                                onAdd: { showPaymentSheet = true },
+                                onWithdraw: { showWithdrawSheet = true }
+                            )
                             TransactionsList(transactions: vm.transactions)
                         }
                         .padding(.vertical, 16)
@@ -35,6 +38,9 @@ struct WalletView: View {
             .task { await vm.fetchAll() }
             .sheet(isPresented: $showPaymentSheet) {
                 PaymentMethodSheet(vm: vm)
+            }
+            .sheet(isPresented: $showWithdrawSheet) {
+                WithdrawSheet(vm: vm)
             }
             .alert("خطأ", isPresented: .init(
                 get: { vm.errorMessage != nil },
@@ -58,6 +64,7 @@ struct WalletView: View {
 private struct BalanceCard: View {
     let wallet: WalletDto?
     let onAdd: () -> Void
+    let onWithdraw: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
@@ -68,14 +75,25 @@ private struct BalanceCard: View {
                 .font(.system(size: 44, weight: .bold))
                 .foregroundColor(brand)
 
-            Button(action: onAdd) {
-                Label("إضافة رصيد", systemImage: "plus.circle.fill")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(brand)
-                    .cornerRadius(12)
+            HStack(spacing: 12) {
+                Button(action: onWithdraw) {
+                    Label("سحب", systemImage: "arrow.up.circle.fill")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.red.opacity(0.85))
+                        .cornerRadius(12)
+                }
+                Button(action: onAdd) {
+                    Label("إضافة رصيد", systemImage: "plus.circle.fill")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(brand)
+                        .cornerRadius(12)
+                }
             }
         }
         .padding(20)
@@ -471,5 +489,210 @@ private struct ActionButton: View {
             .cornerRadius(12)
         }
         .disabled(disabled || isLoading)
+    }
+}
+
+// MARK: - Withdraw sheet
+
+private struct WithdrawSheet: View {
+    @ObservedObject var vm: WalletViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var amount = ""
+    @State private var accountHolderName = ""
+    @State private var bankName = ""
+    @State private var accountNumber = ""
+    @State private var descriptionText = ""
+    @State private var showConfirm = false
+    @State private var showHistory = false
+
+    private var amountDouble: Double { Double(amount) ?? 0 }
+    private var balance: Double { vm.wallet?.amount ?? 0 }
+
+    private var insufficientBalance: Bool { amountDouble > 0 && amountDouble > balance }
+    private var formValid: Bool {
+        amountDouble > 0 && !accountHolderName.isEmpty &&
+        !bankName.isEmpty && !accountNumber.isEmpty && !insufficientBalance
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Balance indicator
+                    HStack {
+                        Text("الرصيد المتاح")
+                            .font(.subheadline).foregroundColor(.secondary)
+                        Spacer()
+                        Text(vm.wallet?.formattedBalance ?? "---")
+                            .font(.subheadline).fontWeight(.bold)
+                            .foregroundColor(brand)
+                    }
+                    .padding(14)
+                    .background(brand.opacity(0.07))
+                    .cornerRadius(10)
+
+                    // Amount field with inline balance warning
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("المبلغ (د.ل)").font(.caption).foregroundColor(.secondary)
+                        TextField("0.00", text: $amount)
+                            .keyboardType(.decimalPad)
+                            .padding(12)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(insufficientBalance ? Color.red : Color.clear, lineWidth: 1.5)
+                            )
+                        if insufficientBalance {
+                            Text("الرصيد غير كافٍ")
+                                .font(.caption).foregroundColor(.red)
+                        }
+                    }
+
+                    FormField(label: "اسم صاحب الحساب",   placeholder: "الاسم الكامل",        text: $accountHolderName)
+                    FormField(label: "اسم البنك",          placeholder: "مثال: مصرف الجمهورية", text: $bankName)
+                    FormField(label: "رقم الحساب / IBAN",  placeholder: "رقم الحساب البنكي",   text: $accountNumber)
+                    FormField(label: "ملاحظة (اختياري)",   placeholder: "سبب السحب",           text: $descriptionText)
+
+                    // Submit button
+                    Button {
+                        showConfirm = true
+                    } label: {
+                        Group {
+                            if vm.withdrawIsLoading {
+                                ProgressView().tint(.white)
+                            } else {
+                                Label("تقديم طلب السحب", systemImage: "arrow.up.circle.fill")
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .foregroundColor(.white)
+                        .background(formValid ? Color.red.opacity(0.85) : Color.gray.opacity(0.4))
+                        .cornerRadius(12)
+                    }
+                    .disabled(!formValid || vm.withdrawIsLoading)
+
+                    // History toggle
+                    Button {
+                        showHistory.toggle()
+                        if showHistory { Task { await vm.fetchWithdrawHistory() } }
+                    } label: {
+                        Label(showHistory ? "إخفاء سجل السحوبات" : "عرض سجل السحوبات",
+                              systemImage: showHistory ? "chevron.up" : "clock.arrow.circlepath")
+                            .font(.subheadline)
+                            .foregroundColor(brand)
+                    }
+
+                    if showHistory {
+                        WithdrawHistoryList(
+                            withdrawals: vm.withdrawHistory,
+                            isLoading: vm.withdrawHistoryLoading
+                        )
+                    }
+                }
+                .padding(20)
+            }
+            .navigationTitle("سحب الرصيد")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("إغلاق") { dismiss() }
+                }
+            }
+            .confirmationDialog(
+                "تأكيد طلب السحب",
+                isPresented: $showConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("تأكيد السحب", role: .destructive) {
+                    Task {
+                        await vm.createWithdraw(
+                            amount: amountDouble,
+                            accountHolderName: accountHolderName,
+                            bankName: bankName,
+                            accountNumber: accountNumber,
+                            description: descriptionText.isEmpty ? nil : descriptionText
+                        )
+                        if vm.successMessage != nil { dismiss() }
+                    }
+                }
+                Button("إلغاء", role: .cancel) {}
+            } message: {
+                Text("سيتم خصم \(String(format: "%.2f", amountDouble)) د.ل من رصيدك وإرسال الطلب للمراجعة.")
+            }
+        }
+        .environment(\.layoutDirection, .rightToLeft)
+        .presentationDetents([.large])
+    }
+}
+
+// MARK: - Withdraw history list
+
+private struct WithdrawHistoryList: View {
+    let withdrawals: [WithdrawDto]
+    let isLoading: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("سجل طلبات السحب")
+                .font(.headline)
+
+            if isLoading {
+                ProgressView().frame(maxWidth: .infinity)
+            } else if withdrawals.isEmpty {
+                Text("لا توجد طلبات سحب سابقة")
+                    .font(.subheadline).foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+            } else {
+                ForEach(withdrawals) { w in
+                    WithdrawHistoryRow(withdraw: w)
+                }
+            }
+        }
+    }
+}
+
+private struct WithdrawHistoryRow: View {
+    let withdraw: WithdrawDto
+    var body: some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(withdraw.statusColor.opacity(0.15))
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Image(systemName: withdraw.status == 1 ? "checkmark" : withdraw.status == 2 ? "xmark" : "clock")
+                        .font(.caption).fontWeight(.bold)
+                        .foregroundColor(withdraw.statusColor)
+                )
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(withdraw.bankName)
+                    .font(.subheadline).fontWeight(.medium)
+                Text(withdraw.formattedDate)
+                    .font(.caption).foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(withdraw.formattedAmount)
+                    .font(.subheadline).fontWeight(.bold)
+                    .foregroundColor(.red)
+                Text(withdraw.statusLabel)
+                    .font(.caption2).fontWeight(.semibold)
+                    .foregroundColor(withdraw.statusColor)
+                    .padding(.horizontal, 7).padding(.vertical, 2)
+                    .background(withdraw.statusColor.opacity(0.12))
+                    .cornerRadius(8)
+            }
+        }
+        .padding(12)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.04), radius: 3, x: 0, y: 1)
     }
 }
