@@ -626,102 +626,163 @@ final class MyPropertiesViewModel: ObservableObject {
 struct NotificationsView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = NotificationsViewModel()
-    
+    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading {
+            ZStack {
+                Color(.systemGroupedBackground).ignoresSafeArea()
+
+                if viewModel.isLoading && viewModel.notifications.isEmpty {
                     ProgressView("جارٍ التحميل...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if viewModel.notifications.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "bell.slash")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
+                            .font(.system(size: 56))
+                            .foregroundColor(.gray.opacity(0.5))
                         Text("لا توجد إشعارات")
                             .font(.headline)
                             .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    List(viewModel.notifications) { notification in
-                        NavigationLink(destination: NotificationDetailView(notification: notification)) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "bell.fill")
-                                    .foregroundColor(Color(hex: "#88417A"))
-                                    .frame(width: 30)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(notification.title)
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
-                                    Text(notification.message)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(2)
-                                    Text(notification.timeAgo)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                if !notification.isRead {
-                                    Circle()
-                                        .fill(Color.red)
-                                        .frame(width: 8, height: 8)
+                    List {
+                        ForEach(viewModel.notifications) { item in
+                            NavigationLink(destination: NotificationDetailView(item: item, viewModel: viewModel)) {
+                                NotificationRow(item: item, brand: brand)
+                            }
+                            .listRowBackground(
+                                item.isRead ? Color.white : brand.opacity(0.05)
+                            )
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    Task { await viewModel.delete(item) }
+                                } label: {
+                                    Label("حذف", systemImage: "trash")
                                 }
                             }
-                            .padding(.vertical, 4)
+                            .swipeActions(edge: .leading) {
+                                if !item.isRead {
+                                    Button {
+                                        Task { await viewModel.markAsRead(item) }
+                                    } label: {
+                                        Label("مقروء", systemImage: "envelope.open")
+                                    }
+                                    .tint(.blue)
+                                }
+                            }
                         }
                     }
+                    .listStyle(.insetGrouped)
+                    .refreshable { await viewModel.fetch() }
                 }
             }
             .navigationTitle("الإشعارات")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("إغلاق") {
-                        dismiss()
+                    Button("إغلاق") { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if viewModel.unreadCount > 0 {
+                        Button("قراءة الكل") {
+                            Task { await viewModel.markAllAsRead() }
+                        }
+                        .font(.caption)
+                        .foregroundColor(brand)
                     }
                 }
             }
-            .onAppear {
-                viewModel.loadNotifications()
+            .task {
+                await viewModel.fetch()
+                viewModel.startAutoRefresh()
             }
+            .onDisappear { viewModel.stopAutoRefresh() }
         }
     }
 }
 
+// MARK: - Notification row
+private struct NotificationRow: View {
+    let item: NotificationItem
+    let brand: Color
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Unread dot
+            Circle()
+                .fill(item.isRead ? Color.clear : brand)
+                .frame(width: 9, height: 9)
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(item.message)
+                    .font(.subheadline)
+                    .fontWeight(item.isRead ? .regular : .semibold)
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.trailing)
+                    .lineLimit(2)
+
+                Text(item.timeAgo)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Notification detail
 struct NotificationDetailView: View {
-    let notification: NotificationItem
-    
+    let item: NotificationItem
+    @ObservedObject var viewModel: NotificationsViewModel
+    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .trailing, spacing: 20) {
+                // Header
                 HStack {
-                    Image(systemName: "bell.fill")
-                        .font(.title)
-                        .foregroundColor(Color(hex: "#88417A"))
                     Spacer()
-                    Text(notification.timeAgo)
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 40))
+                        .foregroundColor(brand)
+                }
+                .padding(.top, 8)
+
+                // Message
+                Text(item.message)
+                    .font(.body)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+
+                Divider()
+
+                // Time
+                HStack {
+                    Spacer()
+                    Label(item.timeAgo, systemImage: "clock")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                
-                Text(notification.title)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                Text(notification.message)
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                
-                if let details = notification.details {
-                    Divider()
-                    Text(details)
-                        .font(.body)
+
+                // Read status
+                HStack {
+                    Spacer()
+                    Label(
+                        item.isRead ? "تمت القراءة" : "غير مقروءة",
+                        systemImage: item.isRead ? "envelope.open.fill" : "envelope.fill"
+                    )
+                    .font(.caption)
+                    .foregroundColor(item.isRead ? .green : .orange)
                 }
             }
             .padding()
         }
         .navigationTitle("تفاصيل الإشعار")
         .navigationBarTitleDisplayMode(.inline)
+        .task { await viewModel.markAsRead(item) }
     }
 }
 
