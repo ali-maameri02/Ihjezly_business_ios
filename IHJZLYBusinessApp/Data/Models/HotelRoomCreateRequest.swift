@@ -95,12 +95,12 @@ enum Feature: String, Codable, CaseIterable {
 extension Feature {
     var arabicName: String {
         switch self {
-        case .cateringAndDiningServices: return "خدمات طعام وشراب"
-        case .decor: return "ديكور"
+        case .cateringAndDiningServices: return "خدمات الضيافة و السفرة"
+        case .decor: return "الديكور"
         case .giantScreens: return "شاشات عملاقة"
-        case .server: return "خادم"
-        case .soundEffects: return "تأثيرات صوتية"
-        case .fumigationAndPerfuming: return "تعقيم وعطرة"
+        case .server: return "مؤثرات صوتية"
+        case .soundEffects: return "مؤثرات صوتية"
+        case .fumigationAndPerfuming: return "تبخير و تعطير"
         }
     }
 }

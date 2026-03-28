@@ -20,7 +20,7 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
             "Description":    form.description,
             "Price":          "\(form.price)",
             "Currency":       "LYD",
-            "Type":           "Residence",
+            "Type":           propertyType.isEventHall ? "Hall" : "Residence",
             "IsAd":           "false",
             "Location.City":    form.location.city,
             "Location.State":   form.location.state,
@@ -71,6 +71,13 @@ final class CreatePropertyUseCase: CreatePropertyUseCaseProtocol {
             fields["Details.NumberOfChildren"] = "\(form.details.numberOfChildren)"
             fields["Details.type"]             = (form.details.resortType ?? .studio).rawValue
             fields["Details.clasification"]    = form.details.classification.rawValue
+
+        case .eventHallSmall, .eventHallLarge:
+            fields["Type"] = "Hall"
+            fields["Details.NumberOfGuests"] = "\(form.details.maxGuests)"
+            for (i, feature) in form.features.enumerated() {
+                fields["Details.Features[\(i)]"] = feature.rawValue
+            }
 
         default:
             throw APIError.badRequest("نوع العقار غير مدعوم: \(propertyType.rawValue)")

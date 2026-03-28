@@ -67,12 +67,21 @@ enum PropertySubType: String, CaseIterable {
         }
     }
 
+    var isEventHall: Bool {
+        self == .eventHallSmall || self == .eventHallLarge
+    }
+
     // Ordered list of steps for this sub-type
     enum CreationStep {
-        case step1, step2, step3, step4Classification, step5Images, step6Facilities, step7UnavailableDates, step8Price
+        case step1, step2, step3, step4Classification,
+             step3EventHallGuests, step4EventHallDates,
+             step5Images, step6Facilities, step7UnavailableDates, step8Price
     }
 
     var creationSteps: [CreationStep] {
+        if isEventHall {
+            return [.step1, .step2, .step3EventHallGuests, .step4EventHallDates, .step5Images, .step8Price]
+        }
         var steps: [CreationStep] = [.step1, .step2]
         if hasStep3 { steps.append(.step3) }
         if hasClassification { steps.append(.step4Classification) }
@@ -91,6 +100,7 @@ enum PropertySubType: String, CaseIterable {
         case .resort:         return "نوع الوحدة"
         case .chalet:         return "عدد الضيوف"
         case .restHouse:      return "عدد الضيوف"
+        case .eventHallSmall, .eventHallLarge: return "الضيوف والمميزات"
         default:              return "تفاصيل العقار"
         }
     }
@@ -108,4 +118,5 @@ protocol PropertyForm {
     var facilities: [Facility] { get set }
     var images: [ImageUpload] { get set }
     var unavailableDates: [String] { get set }
+    var features: [Feature] { get set }
 }

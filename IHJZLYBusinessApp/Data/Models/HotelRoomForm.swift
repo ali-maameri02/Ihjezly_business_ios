@@ -12,6 +12,7 @@ struct HotelRoomForm: PropertyForm {
     var facilities: [Facility] = []
     var images: [ImageUpload] = []
     var unavailableDates: [String] = []
+    var features: [Feature] = []
 }
 
 struct LocationForm {
@@ -40,4 +41,19 @@ struct DetailsForm {
 
     // Resort
     var resortType: ResortsType? = nil
+
+    // EventHall unavailable periods
+    var unavailablePeriods: [UnavailablePeriod] = []
+}
+
+struct UnavailablePeriod: Identifiable, Equatable {
+    let id = UUID()
+    var date: Date
+    var period: DayPeriod
+}
+
+enum DayPeriod: String, CaseIterable {
+    case morning = "Morning"
+    case evening = "Evening"
+    var arabicName: String { self == .morning ? "صباح" : "مساء" }
 }

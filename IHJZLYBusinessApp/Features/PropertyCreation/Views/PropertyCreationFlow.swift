@@ -56,6 +56,18 @@ struct PropertyCreationFlow: View {
                             goNext()
                         }
                     )
+                case .step3EventHallGuests:
+                    EventHallStep3View(
+                        form: form,
+                        onBack: { goBack() },
+                        onNext: { updatedForm in form = updatedForm; goNext() }
+                    )
+                case .step4EventHallDates:
+                    EventHallStep4View(
+                        form: form,
+                        onBack: { goBack() },
+                        onNext: { updatedForm in form = updatedForm; goNext() }
+                    )
                 case .step3:
                     Step3View(
                         form: form,
