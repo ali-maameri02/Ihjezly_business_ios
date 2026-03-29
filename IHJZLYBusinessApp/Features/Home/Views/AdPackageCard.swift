@@ -71,11 +71,11 @@ struct AdPackageCard: View {
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
-            .background(Color(red: 136/255, green: 65/255, blue: 122/255))
+            .background(Color.brand)
             .foregroundColor(.white)
             .cornerRadius(8)
         }
-        .background(Color.white)
+        .background(Color.cardBackground)
         .cornerRadius(12)
         .shadow(radius: 3)
         .frame(height: 265)
@@ -98,7 +98,7 @@ struct AdSubscriptionView: View {
             VStack(spacing: 24) {
                 Image(systemName: "megaphone.fill")
                     .font(.system(size: 60))
-                    .foregroundColor(Color(hex: "#88417A"))
+                    .foregroundColor(Color.brand)
                     .padding(.top, 40)
                 
                 Text("باقة \(packageTitle)")
@@ -113,7 +113,7 @@ struct AdSubscriptionView: View {
                         Text("\(price) دينار")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(Color(hex: "#88417A"))
+                            .foregroundColor(Color.brand)
                     }
                     .padding()
                     .background(Color.gray.opacity(0.1))
@@ -126,7 +126,7 @@ struct AdSubscriptionView: View {
                         FeatureRow(text: "دعم فني 24/7")
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(Color.cardBackground)
                     .cornerRadius(12)
                     .shadow(radius: 2)
                 }
@@ -145,7 +145,7 @@ struct AdSubscriptionView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color(hex: "#88417A"))
+                .background(Color.brand)
                 .foregroundColor(.white)
                 .cornerRadius(12)
                 .padding(.horizontal)

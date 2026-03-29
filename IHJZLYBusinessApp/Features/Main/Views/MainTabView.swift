@@ -6,25 +6,17 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             HomeView()
-                .tabItem {
-                    Label("الرئيسية", systemImage: "house.fill")
-                }
-            
+                .tabItem { Label("الرئيسية", systemImage: "house.fill") }
+
             BookingsView()
-                .tabItem {
-                    Label("الحجوزات", systemImage: "calendar")
-                }
-            
+                .tabItem { Label("الحجوزات", systemImage: "calendar") }
+
             WalletView()
-                .tabItem {
-                    Label("المحفظة", systemImage: "creditcard.fill")
-                }
-            
+                .tabItem { Label("المحفظة", systemImage: "creditcard.fill") }
+
             ProfileView()
-                .tabItem {
-                    Label("الحساب", systemImage: "person.crop.circle")
-                }
+                .tabItem { Label("الحساب", systemImage: "person.crop.circle") }
         }
-        .tint(Color.purple)
+        .tint(.brand)
     }
 }

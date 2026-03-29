@@ -1,11 +1,12 @@
 // Shared/CommonUI.swift
 
 import SwiftUI
-// MARK: - Next Button (for Steps 1–6)
+
+// MARK: - Next Button
 struct NextButton: View {
     let action: () -> Void
     let isDisabled: Bool
-    
+
     var body: some View {
         Button(action: action) {
             Text("التالي")
@@ -15,19 +16,18 @@ struct NextButton: View {
                 .padding()
         }
         .disabled(isDisabled)
-        .foregroundColor(.white)
-        .background(Color(hex: "#88417A"))
+        .background(isDisabled ? Color.gray.opacity(0.4) : .brand)
         .cornerRadius(12)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
         .padding(.bottom, 24)
     }
 }
 
-// MARK: - Finish Button (for Step 7)
+// MARK: - Finish Button
 struct FinishButton: View {
     let action: () -> Void
     let isDisabled: Bool
-    
+
     var body: some View {
         Button(action: action) {
             Text("انهاء")
@@ -37,11 +37,26 @@ struct FinishButton: View {
                 .padding()
         }
         .disabled(isDisabled)
-        .foregroundColor(.white)
-        .background(Color(hex: "#88417A"))
+        .background(isDisabled ? Color.gray.opacity(0.4) : .brand)
         .cornerRadius(12)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
         .padding(.bottom, 24)
+    }
+}
+
+// MARK: - Back Button
+struct BackButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "arrow.right")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(.brand)
+                .frame(width: 36, height: 36)
+                .background(Color.brand.opacity(0.1))
+                .clipShape(Circle())
+        }
     }
 }
 
@@ -65,20 +80,6 @@ private struct RoundedCorner: Shape {
     }
 }
 
-// MARK: - Back Button
-struct BackButton: View {
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text("←")
-                .font(.title2)
-                .foregroundColor(Color(hex: "#88417A"))
-        }
-    }
-}
-
-
 // MARK: - Image Preview
 struct ImagePreview: View {
     let url: String
@@ -88,62 +89,47 @@ struct ImagePreview: View {
 
     var body: some View {
         Button(action: onSelect) {
-            ZStack {
-                // Handle base64 or URL
-                if url.hasPrefix("data:image") {
-                    if let base64String = extractBase64(from: url),
-                       let data = Data(base64Encoded: base64String),
-                       let uiImage = UIImage(data: data) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 100, height: 100)
-                            .clipped()
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(isSelected ? Color(red: 136/255, green: 65/255, blue: 122/255) : Color.gray.opacity(0.3), lineWidth: 2)
-                            )
-                    } else {
-                        placeholderImage()
-                    }
-                } else {
-                    placeholderImage()
+            ZStack(alignment: .topTrailing) {
+                imageContent
+                    .frame(width: 100, height: 100)
+                    .clipped()
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(isSelected ? Color.brand : Color.gray.opacity(0.3), lineWidth: 2)
+                    )
+
+                Button(action: onDelete) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.red)
+                        .background(Color.cardBackground.clipShape(Circle()))
                 }
-                
-                // Checkmark for main image
+                .offset(x: 6, y: -6)
+
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color(hex: "#88417A"))
-                        .offset(x: 35, y: -35)
+                        .font(.system(size: 18))
+                        .foregroundColor(.brand)
+                        .background(Color.cardBackground.clipShape(Circle()))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        .padding(4)
                 }
-                
-                // Delete button
-                Button(action: onDelete) {
-                    Image(systemName: "x.circle.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(Color.red)
-                        .offset(x: 35, y: -35)
-                }
-                .buttonStyle(PlainButtonStyle())
             }
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
-    
-    private func placeholderImage() -> some View {
-        Rectangle()
-            .fill(Color.gray.opacity(0.1))
-            .frame(width: 100, height: 100)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color(red: 136/255, green: 65/255, blue: 122/255) : Color.gray.opacity(0.3), lineWidth: 2)
-            )
-    }
-    
-    private func extractBase64(from dataURL: String) -> String? {
-        let components = dataURL.components(separatedBy: ",")
-        return components.count > 1 ? components[1] : nil
+
+    @ViewBuilder
+    private var imageContent: some View {
+        if url.hasPrefix("data:image"),
+           let range = url.range(of: ","),
+           let data = Data(base64Encoded: String(url[range.upperBound...])),
+           let uiImage = UIImage(data: data) {
+            Image(uiImage: uiImage).resizable().scaledToFill()
+        } else {
+            Color(.systemGray5)
+                .overlay(Image(systemName: "photo").foregroundColor(.secondary))
+        }
     }
 }

@@ -5,7 +5,7 @@ struct EventHallStep4View<FormData: PropertyForm>: View {
     let onBack: () -> Void
     let onNext: (FormData) -> Void
 
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     init(form: FormData, onBack: @escaping () -> Void, onNext: @escaping (FormData) -> Void) {
         _viewModel = StateObject(wrappedValue: EventHallStep4ViewModel(form: form))
@@ -35,7 +35,7 @@ struct EventHallStep4View<FormData: PropertyForm>: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
 
                 ScrollView {
@@ -61,7 +61,7 @@ struct EventHallStep4View<FormData: PropertyForm>: View {
                                 .datePickerStyle(GraphicalDatePickerStyle())
                                 .tint(brand)
                                 .padding(.horizontal, 8)
-                                .background(Color.white)
+                                .background(Color.cardBackground)
                                 .cornerRadius(12)
                                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.15), lineWidth: 1))
                             }
@@ -80,7 +80,7 @@ struct EventHallStep4View<FormData: PropertyForm>: View {
                                 .datePickerStyle(GraphicalDatePickerStyle())
                                 .tint(brand)
                                 .padding(.horizontal, 8)
-                                .background(Color.white)
+                                .background(Color.cardBackground)
                                 .cornerRadius(12)
                                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.15), lineWidth: 1))
                             }
@@ -135,7 +135,7 @@ struct EventHallStep4View<FormData: PropertyForm>: View {
                     isDisabled: false
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
         }
     }

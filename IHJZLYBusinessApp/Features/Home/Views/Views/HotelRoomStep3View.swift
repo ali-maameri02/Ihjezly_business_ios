@@ -34,12 +34,12 @@ struct HotelRoomStep3View: View {
                     .padding(.top, 12)
                     
                     Divider()
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .frame(height: 2)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
                 
                 ScrollView {
@@ -81,7 +81,7 @@ struct HotelRoomStep3View: View {
                     isDisabled: viewModel.isNextDisabled
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
         }
     }
@@ -134,7 +134,7 @@ struct RadioButton: View {
                     .frame(width: 28, height: 28)
                 if isSelected {
                     Circle()
-                        .fill(Color(red: 136/255, green: 65/255, blue: 122/255))
+                        .fill(Color.brand)
                         .frame(width: 18, height: 18)
                 }
             }
@@ -160,7 +160,7 @@ struct GuestCounter: View {
                     if count > min { count -= 1 }
                 }
                 .frame(width: 44, height: 44)
-                .background(Color(hex: "#88417A"))
+                .background(Color.brand)
                 .cornerRadius(22)
                 .foregroundColor(.white)
                 
@@ -172,7 +172,7 @@ struct GuestCounter: View {
                     if count < max { count += 1 }
                 }
                 .frame(width: 44, height: 44)
-                .background(Color(hex: "#88417A"))
+                .background(Color.brand)
                 .cornerRadius(22)
                 .foregroundColor(.white)
             }

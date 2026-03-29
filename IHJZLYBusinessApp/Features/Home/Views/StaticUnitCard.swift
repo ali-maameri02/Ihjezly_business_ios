@@ -8,26 +8,30 @@ struct StaticUnitCard: View {
         NavigationLink {
             PropertyCreationNavigator(propertySubType: card.subType)
         } label: {
-            VStack(spacing: 8) {
+            VStack(spacing: 0) {
                 Image(card.image)
                     .resizable()
-                    .aspectRatio(1.5, contentMode: .fill)
+                    .aspectRatio(1.4, contentMode: .fill)
                     .clipped()
-                    .cornerRadius(8)
+                    .cornerRadius(10, corners: [.topLeft, .topRight])
+
                 Text(card.title)
-                    .font(.headline)
-                    .fontWeight(.medium)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
+                    .foregroundColor(.primary)
                     .padding(.horizontal, 8)
-                    .foregroundStyle(Color.black)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.cardBackground)
+                    .cornerRadius(10, corners: [.bottomLeft, .bottomRight])
             }
-            .frame(maxWidth: .infinity)
-            .background(Color.white)
-            .cornerRadius(12)
-            .shadow(radius: 3)
-            .padding(.horizontal, 4)
+            .background(Color.cardBackground)
+            .cornerRadius(10)
+            .shadow(color: .black.opacity(0.07), radius: 5, x: 0, y: 2)
         }
+        .buttonStyle(.plain)
     }
 }
 

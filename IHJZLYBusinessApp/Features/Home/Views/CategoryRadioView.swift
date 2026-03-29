@@ -4,47 +4,52 @@ import SwiftUI
 
 struct CategoryRadioView: View {
     @Binding var selectedCategory: PropertyCategory
-    
+
     var body: some View {
-        HStack {
-            Button("قاعات مناسبات") {
-                selectedCategory = .events
+        HStack(spacing: 12) {
+            ForEach(PropertyCategory.allCases, id: \.self) { cat in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { selectedCategory = cat }
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: selectedCategory == cat ? "largecircle.fill.circle" : "circle")
+                            .font(.system(size: 16))
+                            .foregroundColor(selectedCategory == cat ? .brand : .secondary)
+                        Text(cat.rawValue)
+                            .font(.subheadline)
+                            .fontWeight(selectedCategory == cat ? .semibold : .regular)
+                            .foregroundColor(selectedCategory == cat ? .primary : .secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .background(selectedCategory == cat ? Color.brand.opacity(0.08) : Color(.systemGray6))
+                    .cornerRadius(20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(selectedCategory == cat ? Color.brand.opacity(0.4) : Color.clear, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(CategoryButtonStyle(isSelected: selectedCategory == .events))
-            
-            Spacer() // 👈 This pushes buttons to edges
-            
-            Button("إقامات") {
-                selectedCategory = .accommodations
-            }
-            .buttonStyle(CategoryButtonStyle(isSelected: selectedCategory == .accommodations))
+            Spacer()
         }
-        .padding(.horizontal)
     }
 }
 
 struct CategoryButtonStyle: ButtonStyle {
     let isSelected: Bool
-    
     func makeBody(configuration: Configuration) -> some View {
         HStack(spacing: 8) {
             configuration.label
                 .font(.body)
                 .foregroundColor(isSelected ? .primary : .secondary)
-            
-            if isSelected {
-                Image(systemName: "circle.fill")
-                    .foregroundColor(Color(red: 136/255, green: 65/255, blue: 122/255)) // #88417A
-                    .font(.caption)
-            } else {
-                Image(systemName: "circle")
-                    .foregroundColor(.gray)
-                    .font(.caption)
-            }
+            Image(systemName: isSelected ? "circle.fill" : "circle")
+                .foregroundColor(isSelected ? .brand : .gray)
+                .font(.caption)
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
-        .background(isSelected ? Color.gray.opacity(0.1) : Color.clear)
+        .background(isSelected ? Color.brand.opacity(0.08) : Color.clear)
         .cornerRadius(6)
     }
 }

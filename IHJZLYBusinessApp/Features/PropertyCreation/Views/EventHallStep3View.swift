@@ -5,7 +5,7 @@ struct EventHallStep3View<FormData: PropertyForm>: View {
     let onBack: () -> Void
     let onNext: (FormData) -> Void
 
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     init(form: FormData, onBack: @escaping () -> Void, onNext: @escaping (FormData) -> Void) {
         _viewModel = StateObject(wrappedValue: EventHallStep3ViewModel(form: form))
@@ -35,7 +35,7 @@ struct EventHallStep3View<FormData: PropertyForm>: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
 
                 ScrollView {
@@ -76,7 +76,7 @@ struct EventHallStep3View<FormData: PropertyForm>: View {
                                 Spacer()
                             }
                             .padding(12)
-                            .background(Color.white)
+                            .background(Color.cardBackground)
                             .cornerRadius(8)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
                         }
@@ -114,7 +114,7 @@ struct EventHallStep3View<FormData: PropertyForm>: View {
                     isDisabled: viewModel.isNextDisabled
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
         }
     }
@@ -147,7 +147,7 @@ private struct FeatureCheckRow: View {
                 Spacer()
             }
             .padding(12)
-            .background(isSelected ? brand.opacity(0.06) : Color.white)
+            .background(isSelected ? brand.opacity(0.06) : Color.cardBackground)
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)

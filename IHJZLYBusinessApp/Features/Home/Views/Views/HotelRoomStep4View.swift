@@ -34,12 +34,12 @@ struct HotelRoomStep4View: View {
                     .padding(.top, 12)
                     
                     Divider()
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .frame(height: 2)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
                 
                 // SCROLLABLE CONTENT
@@ -108,7 +108,7 @@ struct HotelRoomStep4View: View {
                     isDisabled: false
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
         }
     }

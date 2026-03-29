@@ -4,7 +4,7 @@ import SwiftUI
 struct BookingsView: View {
     @StateObject private var viewModel = BookingsViewModel()
     @State private var selectedStatus: BookingStatus = .pending
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
     private let tabs: [BookingStatus] = [.pending, .confirmed, .lastConfirmed, .rejected, .cancelled, .completed]
 
     var body: some View {
@@ -73,7 +73,7 @@ struct BookingsView: View {
             }
             .padding(.horizontal, 16).padding(.vertical, 10)
         }
-        .background(Color.white)
+        .background(Color.cardBackground)
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 
@@ -226,7 +226,7 @@ private struct BookingRow: View {
             }
             .padding(.vertical, 10)
         }
-        .background(Color.white)
+        .background(Color.cardBackground)
         .cornerRadius(14)
         .shadow(color: .black.opacity(0.06), radius: 5, x: 0, y: 2)
         .sheet(isPresented: $showDetail) {
@@ -267,7 +267,7 @@ private struct InfoCell: View {
 private struct BookingDetailSheet: View {
     let booking: Booking
     @Environment(\.dismiss) private var dismiss
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     var body: some View {
         NavigationStack {

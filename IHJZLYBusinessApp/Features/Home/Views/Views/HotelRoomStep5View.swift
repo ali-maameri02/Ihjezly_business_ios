@@ -34,12 +34,12 @@ struct HotelRoomStep5View: View {
                     .padding(.top, 12)
                     
                     Divider()
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .frame(height: 2)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
                 
                 ScrollView {
@@ -69,7 +69,7 @@ struct HotelRoomStep5View: View {
                         Button(action: { viewModel.selectMainImage() }) {
                             ZStack {
                                 Rectangle()
-                                    .fill(Color.white)
+                                    .fill(Color.cardBackground)
                                     .frame(width: 300, height: 200)
                                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3), lineWidth: 1))
                                 Image(systemName: "photo")
@@ -77,7 +77,7 @@ struct HotelRoomStep5View: View {
                                     .foregroundColor(Color.gray.opacity(0.5))
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 32))
-                                    .foregroundColor(Color(hex: "#88417A"))
+                                    .foregroundColor(Color.brand)
                                     .offset(y: -20)
                             }
                             .frame(width: 300, height: 200)
@@ -88,14 +88,14 @@ struct HotelRoomStep5View: View {
                     VStack(spacing: 12) {
                         Button("أضف المزيد") { viewModel.addMoreImages() }
                             .frame(height: 52)
-                            .background(Color(hex: "#88417A"))
+                            .background(Color.brand)
                             .cornerRadius(12)
                             .foregroundColor(.white)
                             
                         if !viewModel.rawBase64Images.isEmpty {
                             Button("حذف كل الصور") { viewModel.deleteAllImages() }
                                 .frame(height: 52)
-                                .background(Color(hex: "#88417A"))
+                                .background(Color.brand)
                                 .cornerRadius(12)
                                 .foregroundColor(.white)
                         }
@@ -110,7 +110,7 @@ struct HotelRoomStep5View: View {
                         TextField("الرابط", text: $viewModel.videoUrl)
                             .textFieldStyle(PlainTextFieldStyle())
                             .padding(12)
-                            .background(Color.white)
+                            .background(Color.cardBackground)
                             .cornerRadius(8)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
                     }
@@ -128,7 +128,7 @@ struct HotelRoomStep5View: View {
                     isDisabled: viewModel.isNextDisabled
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
             .onAppear { requestPhotoAccess() }
         }

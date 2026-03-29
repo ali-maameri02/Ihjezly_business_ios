@@ -12,60 +12,64 @@ struct SignUpView: View {
             VStack(spacing: 24) {
                 Text("إنشاء حساب")
                     .font(.title2)
-                    .fontWeight(.semibold)
+                    .fontWeight(.bold)
                     .foregroundColor(.primary)
-                
+                    .padding(.top, 48)
+
                 HStack(spacing: 8) {
                     Text("+218")
                         .font(.headline)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 12)
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(8)
-                    
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 14)
+                        .background(Color(.systemGray5))
+                        .cornerRadius(12)
+
                     TextField("912345678", text: $viewModel.phoneNumber)
                         .keyboardType(.phonePad)
                         .textInputAutocapitalization(.never)
+                        .padding(14)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
                         .onReceive(Just(viewModel.phoneNumber)) { newValue in
                             let filtered = newValue.filter { $0.isNumber }
                             viewModel.phoneNumber = String(filtered.prefix(9))
                         }
                 }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
-                .padding(.horizontal)
-                
+                .padding(.horizontal, 24)
+
                 if let error = viewModel.errorMessage {
                     Text(error)
                         .foregroundColor(.red)
                         .font(.caption)
-                        .padding(.horizontal)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
                 }
-                
-                Button(action: {
+
+                Button {
                     Task {
                         await viewModel.sendOTP()
-                        if viewModel.isSuccess {
-                            onOTPSent(viewModel.phoneNumber) // 9-digit only
+                        if viewModel.isSuccess { onOTPSent(viewModel.phoneNumber) }
+                    }
+                } label: {
+                    Group {
+                        if viewModel.isLoading {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text("إرسال كود التحقق").fontWeight(.semibold)
                         }
                     }
-                }) {
-                    Text("إرسال كود التحقق")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(viewModel.isLoading ? Color.gray : Color.purple)
-                        .cornerRadius(10)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .foregroundColor(.white)
+                    .background(viewModel.isLoading ? Color.gray.opacity(0.4) : .brand)
+                    .cornerRadius(12)
                 }
                 .disabled(viewModel.isLoading || viewModel.phoneNumber.count != 9)
-                .padding(.horizontal)
+                .padding(.horizontal, 24)
             }
-            .padding(.top, 60)
+            .padding(.bottom, 40)
         }
-        .background(Color.white)
-        .ignoresSafeArea()
+        .background(Color.pageBackground.ignoresSafeArea())
     }
 }

@@ -36,12 +36,12 @@ struct HotelRoomStep2View: View {
                     .padding(.top, 12)
                     
                     Divider()
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .frame(height: 2)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
                 
                 // SCROLLABLE CONTENT
@@ -61,7 +61,7 @@ struct HotelRoomStep2View: View {
                             .frame(maxWidth: .infinity)
                         }
                         .frame(height: 52)
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .cornerRadius(12)
                         .padding(.horizontal, 16)
                         
@@ -72,7 +72,7 @@ struct HotelRoomStep2View: View {
                             showsUserLocation: false,
                             annotationItems: viewModel.selectedPin.map { [$0] } ?? []
                         ) { pin in
-                            MapMarker(coordinate: pin.coordinate, tint: Color(red: 136/255, green: 65/255, blue: 122/255))
+                            MapMarker(coordinate: pin.coordinate, tint: Color.brand)
                         }
                         .mapStyle(viewModel.isSatellite ? .imagery : .standard)
                         .frame(height: 400)
@@ -86,7 +86,7 @@ struct HotelRoomStep2View: View {
                         
                         // Satellite toggle
                         Toggle("وضع الأقمار", isOn: $viewModel.isSatellite)
-                            .toggleStyle(SwitchToggleStyle(tint: Color(red: 136/255, green: 65/255, blue: 122/255)))
+                            .toggleStyle(SwitchToggleStyle(tint: Color.brand))
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
                     }
@@ -98,7 +98,7 @@ struct HotelRoomStep2View: View {
                     isDisabled: viewModel.selectedPin == nil
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
             .alert("خطأ", isPresented: $viewModel.isErrorAlertPresented) {
                 Button("موافق") {

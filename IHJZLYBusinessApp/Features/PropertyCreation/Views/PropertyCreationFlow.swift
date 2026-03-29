@@ -139,7 +139,7 @@ struct PropertyCreationFlow: View {
                             .foregroundColor(.white).font(.headline)
                     }
                     .padding(30)
-                    .background(Color(hex: "#88417A"))
+                    .background(Color.brand)
                     .cornerRadius(16)
                 }
             }
@@ -171,7 +171,7 @@ struct PropertyCreationFlow: View {
 struct StepProgressBar: View {
     let current: Int
     let total: Int
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     var body: some View {
         VStack(spacing: 6) {

@@ -1,7 +1,7 @@
 // Features/Main/Views/WalletView.swift
 import SwiftUI
 
-private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+private let brand = Color.brand
 
 // MARK: - Root view
 
@@ -97,7 +97,7 @@ private struct BalanceCard: View {
             }
         }
         .padding(20)
-        .background(Color.white)
+        .background(Color.cardBackground)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.07), radius: 6, x: 0, y: 2)
         .padding(.horizontal, 16)
@@ -161,7 +161,7 @@ private struct TransactionRow: View {
                 .foregroundColor(tx.isCredit ? .green : .red)
         }
         .padding(14)
-        .background(Color.white)
+        .background(Color.cardBackground)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.04), radius: 3, x: 0, y: 1)
     }
@@ -255,7 +255,7 @@ private struct MethodCard: View {
                     .font(.caption).foregroundColor(.secondary)
             }
             .padding(16)
-            .background(Color.white)
+            .background(Color.cardBackground)
             .cornerRadius(14)
             .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 1)
         }
@@ -691,7 +691,7 @@ private struct WithdrawHistoryRow: View {
             }
         }
         .padding(12)
-        .background(Color.white)
+        .background(Color.cardBackground)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.04), radius: 3, x: 0, y: 1)
     }

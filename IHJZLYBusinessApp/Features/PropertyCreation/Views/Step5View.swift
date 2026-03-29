@@ -12,7 +12,7 @@ struct Step5View<FormData: PropertyForm>: View {
         self.onNext = onNext
     }
 
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     var body: some View {
         NavigationStack {
@@ -31,12 +31,12 @@ struct Step5View<FormData: PropertyForm>: View {
                     .padding(.top, 12)
 
                     Divider()
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .frame(height: 2)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
 
                 ScrollView {
@@ -122,7 +122,7 @@ struct Step5View<FormData: PropertyForm>: View {
                                 .textInputAutocapitalization(.never)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .padding(12)
-                                .background(Color.white)
+                                .background(Color.cardBackground)
                                 .cornerRadius(8)
                                 .overlay(RoundedRectangle(cornerRadius: 8)
                                     .stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
@@ -138,7 +138,7 @@ struct Step5View<FormData: PropertyForm>: View {
                     isDisabled: viewModel.isNextDisabled
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
             .onAppear { PHPhotoLibrary.requestAuthorization { _ in } }
         }

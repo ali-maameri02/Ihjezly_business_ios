@@ -121,7 +121,7 @@ struct HotelRoomCreationFlow: View {
                                     .font(.headline)
                             }
                             .padding(30)
-                            .background(Color(hex: "#88417A"))
+                            .background(Color.brand)
                             .cornerRadius(16)
                         }
                     }

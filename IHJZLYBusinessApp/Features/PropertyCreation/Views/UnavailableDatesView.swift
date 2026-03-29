@@ -29,12 +29,12 @@ struct UnavailableDatesView<FormData: PropertyForm>: View {
                     .padding(.top, 12)
 
                     Divider()
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .frame(height: 2)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
 
                 ScrollView {
@@ -60,7 +60,7 @@ struct UnavailableDatesView<FormData: PropertyForm>: View {
                                     }
                                     .frame(maxWidth: .infinity)
                                     .padding(8)
-                                    .background(Color(hex: "#88417A"))
+                                    .background(Color.brand)
                                     .cornerRadius(8)
                                 }
                             }
@@ -77,7 +77,7 @@ struct UnavailableDatesView<FormData: PropertyForm>: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                         }
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .cornerRadius(12)
                         .padding(.horizontal, 16)
                     }
@@ -92,7 +92,7 @@ struct UnavailableDatesView<FormData: PropertyForm>: View {
                     isDisabled: false
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
             .sheet(isPresented: $viewModel.showDatePicker) {
                 DatePickerView(selectedDate: $viewModel.tempDate) {

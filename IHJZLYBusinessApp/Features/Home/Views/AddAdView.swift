@@ -4,7 +4,7 @@ import SwiftUI
 struct AddAdView: View {
     @StateObject private var viewModel = AddAdViewModel()
     @State private var showSubscription = false
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     var body: some View {
         ZStack {
@@ -102,7 +102,7 @@ struct AddAdView: View {
                     .font(.caption).fontWeight(.bold)
                     .foregroundColor(brand)
                     .padding(.horizontal, 10).padding(.vertical, 5)
-                    .background(Color.white)
+                    .background(Color.cardBackground)
                     .cornerRadius(8)
             }
             .padding(14)
@@ -204,7 +204,7 @@ private struct AdPropertyRow: View {
             }
         }
         .padding(14)
-        .background(Color.white)
+        .background(Color.cardBackground)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }

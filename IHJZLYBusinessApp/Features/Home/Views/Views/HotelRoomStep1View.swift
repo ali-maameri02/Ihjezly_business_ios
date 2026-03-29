@@ -42,12 +42,12 @@ struct HotelRoomStep1View: View {
                     .padding(.top, 12)
                     
                     Divider()
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .frame(height: 2)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1) // Optional: subtle shadow
                 
                 // SCROLLABLE CONTENT
@@ -61,7 +61,7 @@ struct HotelRoomStep1View: View {
                             TextField("", text: $viewModel.title) // Instead of $viewModel.form.title
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .padding(12)
-                                .background(Color.white)
+                                .background(Color.cardBackground)
                                 .cornerRadius(8)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
@@ -85,7 +85,7 @@ struct HotelRoomStep1View: View {
                                     .foregroundColor(.gray)
                             }
                             .padding(12)
-                            .background(Color.white)
+                            .background(Color.cardBackground)
                             .cornerRadius(8)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
@@ -122,7 +122,7 @@ struct HotelRoomStep1View: View {
                                     .foregroundColor(.gray)
                             }
                             .padding(12)
-                            .background(Color.white)
+                            .background(Color.cardBackground)
                             .cornerRadius(8)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
@@ -161,7 +161,7 @@ struct HotelRoomStep1View: View {
                                 .frame(height: 40)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .padding(12)
-                                .background(Color.white)
+                                .background(Color.cardBackground)
                                 .cornerRadius(8)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
@@ -190,7 +190,7 @@ struct HotelRoomStep1View: View {
                     isDisabled: viewModel.isNextDisabled
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
             .alert("خطأ", isPresented: $viewModel.isErrorAlertPresented) {
                 Button("موافق") {

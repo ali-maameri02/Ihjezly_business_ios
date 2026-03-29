@@ -38,12 +38,12 @@ struct Step1View<FormData: PropertyForm>: View {
                     .padding(.top, 12)
 
                     Divider()
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .frame(height: 2)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
 
                 ScrollView {
@@ -56,7 +56,7 @@ struct Step1View<FormData: PropertyForm>: View {
                             TextField("", text: $viewModel.title)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .padding(12)
-                                .background(Color.white)
+                                .background(Color.cardBackground)
                                 .cornerRadius(8)
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
                         }
@@ -84,7 +84,7 @@ struct Step1View<FormData: PropertyForm>: View {
                                             .foregroundColor(.gray)
                                     }
                                     .padding(12)
-                                    .background(Color.white)
+                                    .background(Color.cardBackground)
                                     .cornerRadius(8)
                                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
                                 }
@@ -114,7 +114,7 @@ struct Step1View<FormData: PropertyForm>: View {
                                         .foregroundColor(.gray)
                                 }
                                 .padding(12)
-                                .background(Color.white)
+                                .background(Color.cardBackground)
                                 .cornerRadius(8)
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
                             }
@@ -134,7 +134,7 @@ struct Step1View<FormData: PropertyForm>: View {
                                 .frame(height: 40)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .padding(12)
-                                .background(Color.white)
+                                .background(Color.cardBackground)
                                 .cornerRadius(8)
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 0.5))
                         }
@@ -150,7 +150,7 @@ struct Step1View<FormData: PropertyForm>: View {
                     isDisabled: viewModel.isNextDisabled
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
             .alert("خطأ", isPresented: $viewModel.isErrorAlertPresented) {
                 Button("حسناً") {}

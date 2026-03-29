@@ -151,12 +151,12 @@ struct Step2View<FormData: PropertyForm>: View {
                     .padding(.top, 12)
 
                     Divider()
-                        .background(Color(hex: "#88417A"))
+                        .background(Color.brand)
                         .frame(height: 2)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(radius: 1)
 
                 // Hint
@@ -176,7 +176,7 @@ struct Step2View<FormData: PropertyForm>: View {
                 if let pin = viewModel.selectedPin {
                     HStack {
                         Image(systemName: "mappin.circle.fill")
-                            .foregroundColor(Color(hex: "#88417A"))
+                            .foregroundColor(Color.brand)
                         Text(String(format: "%.5f, %.5f",
                                     pin.coordinate.latitude,
                                     pin.coordinate.longitude))
@@ -191,7 +191,7 @@ struct Step2View<FormData: PropertyForm>: View {
                     isDisabled: viewModel.selectedPin == nil
                 )
             }
-            .background(Color.white)
+            .background(Color.cardBackground)
             .navigationBarHidden(true)
         }
     }

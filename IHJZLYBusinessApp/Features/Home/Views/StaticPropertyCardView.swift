@@ -20,7 +20,7 @@ struct StaticPropertyCardView: View {
                 .lineLimit(2)
                 .padding(.horizontal, 8)
         }
-        .background(Color.white)
+        .background(Color.cardBackground)
         .cornerRadius(12)
         .shadow(radius: 3)
         .frame(height: 240)

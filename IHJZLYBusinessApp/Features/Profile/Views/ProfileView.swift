@@ -19,7 +19,7 @@ struct ProfileView: View {
                         Image(systemName: "person.circle.fill")
                             .resizable()
                             .frame(width: 80, height: 80)
-                            .foregroundColor(Color(hex: "#88417A"))
+                            .foregroundColor(Color.brand)
                         
                         Text(viewModel.currentUser?.fullName ?? "المستخدم")
                             .font(.title2)
@@ -56,7 +56,7 @@ struct ProfileView: View {
                             ProfileMenuItemContent(icon: "arrow.right.square.fill", title: "تسجيل الخروج", isDestructive: true)
                         }
                     }
-                    .background(Color.white)
+                    .background(Color.cardBackground)
                     .cornerRadius(12)
                     .padding(.horizontal, 16)
                 }
@@ -89,7 +89,7 @@ struct ProfileMenuItemContent: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(isDestructive ? .red : Color(hex: "#88417A"))
+                .foregroundColor(isDestructive ? .red : Color.brand)
                 .frame(width: 24)
             Text(title)
                 .foregroundColor(isDestructive ? .red : .primary)
@@ -150,7 +150,7 @@ struct AccountInfoView: View {
 
 struct MyPropertiesView: View {
     @StateObject private var viewModel = MyPropertiesViewModel()
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     var body: some View {
         ZStack {
@@ -176,7 +176,7 @@ struct MyPropertiesView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                 }
-                .background(Color.white)
+                .background(Color.cardBackground)
                 .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
 
                 if viewModel.isLoading {
@@ -308,7 +308,7 @@ struct MyPropertiesView: View {
                         .font(.caption).frame(maxWidth: .infinity)
                 }
                 .padding(.vertical, 8)
-                .background(Color.white)
+                .background(Color.cardBackground)
             }
             .cornerRadius(12)
             .shadow(color: .black.opacity(0.07), radius: 4, x: 0, y: 2)
@@ -454,7 +454,7 @@ private struct PropertyCard: View {
                 }
             }
             .padding(14)
-            .background(Color.white)
+            .background(Color.cardBackground)
             .cornerRadius(12, corners: [.bottomLeft, .bottomRight])
         }
         .shadow(color: .black.opacity(0.08), radius: 5, x: 0, y: 2)
@@ -555,7 +555,7 @@ private struct PlanRow: View {
             }
         }
         .padding(14)
-        .background(Color.white)
+        .background(Color.cardBackground)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.06), radius: 3, x: 0, y: 1)
     }
@@ -766,7 +766,7 @@ final class MyPropertiesViewModel: ObservableObject {
 struct NotificationsView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = NotificationsViewModel()
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     var body: some View {
         NavigationStack {
@@ -793,7 +793,7 @@ struct NotificationsView: View {
                                 NotificationRow(item: item, brand: brand)
                             }
                             .listRowBackground(
-                                item.isRead ? Color.white : brand.opacity(0.05)
+                                item.isRead ? Color.cardBackground : brand.opacity(0.05)
                             )
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button(role: .destructive) {
@@ -877,7 +877,7 @@ private struct NotificationRow: View {
 struct NotificationDetailView: View {
     let item: NotificationItem
     @ObservedObject var viewModel: NotificationsViewModel
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     var body: some View {
         ScrollView {
@@ -1081,7 +1081,7 @@ struct PolicySection: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.headline)
-                .foregroundColor(Color(hex: "#88417A"))
+                .foregroundColor(Color.brand)
             
             Text(content)
                 .font(.body)

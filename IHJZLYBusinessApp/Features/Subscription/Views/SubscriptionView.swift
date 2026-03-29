@@ -3,7 +3,7 @@ import SwiftUI
 
 struct SubscriptionView: View {
     @StateObject private var viewModel: SubscriptionViewModel
-    private let brand = Color(red: 136/255, green: 65/255, blue: 122/255)
+    private let brand = Color.brand
 
     init(userId: String) {
         _viewModel = StateObject(wrappedValue: SubscriptionViewModel(userId: userId))
@@ -167,7 +167,7 @@ private struct ActiveSubscriptionCard: View {
                 }
             }
             .padding(16)
-            .background(Color.white)
+            .background(Color.cardBackground)
         }
         .cornerRadius(14)
         .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 2)
@@ -257,7 +257,7 @@ private struct PlanCard: View {
                 }
             }
             .padding(16)
-            .background(Color.white)
+            .background(Color.cardBackground)
         }
         .cornerRadius(14)
         .shadow(color: .black.opacity(0.07), radius: 6, x: 0, y: 2)

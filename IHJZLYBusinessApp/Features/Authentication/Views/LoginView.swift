@@ -4,82 +4,107 @@ import SwiftUI
 import Combine
 
 struct LoginView: View {
-    @StateObject private var viewModel: LoginViewModel // ✅ Declare type only
+    @StateObject private var viewModel: LoginViewModel
     let onSignUpTapped: () -> Void
-    
+
     init(appState: AppState, onSignUpTapped: @escaping () -> Void) {
         _viewModel = StateObject(wrappedValue: LoginViewModel(appState: appState))
         self.onSignUpTapped = onSignUpTapped
     }
-    
+
     var body: some View {
-        VStack(spacing: 24) {
-            // Logo
-            Image("ihjzlyapplogo")
-                .resizable()
-                .frame(width: 80, height: 80)
-            
-            Text("تسجيل الدخول")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-            
-            HStack {
-                Image(systemName: "person.fill")
-                    .foregroundColor(.gray)
-                TextField("رقم الهاتف أو البريد الإلكتروني", text: $viewModel.phoneDigits)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-            }
-            .padding()
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(8)
-            .padding(.horizontal)
-            
-            PasswordTextField(value: $viewModel.password, placeholder: "كلمة المرور")
-                .padding(.horizontal)
-            
-            if let error = viewModel.errorMessage {
-                Text(error)
-                    .foregroundColor(.red)
-                    .font(.caption)
-                    .padding(.horizontal)
-            }
-            
-            Button(action: {
-                Task { await viewModel.login() }
-            }) {
-                Text("تسجيل الدخول")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(viewModel.isLoading ? Color.gray : Color.purple)
-                    .cornerRadius(8)
-            }
-            .disabled(viewModel.isLoading || viewModel.phoneDigits.isEmpty || viewModel.password.isEmpty)
-            .padding(.horizontal)
-            
-            HStack {
-                Text("ليس لديك حساب؟")
-                    .foregroundColor(.secondary)
-                Button("إنشاء حساب") {
-                    onSignUpTapped() // ✅ No args
+        ScrollView {
+            VStack(spacing: 24) {
+                // Logo
+                VStack(spacing: 12) {
+                    Image("ihjzlyapplogo")
+                        .resizable()
+                        .frame(width: 90, height: 90)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .shadow(color: .brand.opacity(0.3), radius: 10, x: 0, y: 4)
+
+                    Text("تسجيل الدخول")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
                 }
-                .foregroundColor(Color.purple)
-                .fontWeight(.medium)
+                .padding(.top, 48)
+
+                VStack(spacing: 16) {
+                    AuthField(icon: "person.fill", placeholder: "رقم الهاتف أو البريد الإلكتروني",
+                               text: $viewModel.phoneDigits, keyboard: .emailAddress)
+
+                    PasswordTextField(value: $viewModel.password, placeholder: "كلمة المرور")
+                }
+                .padding(.horizontal, 24)
+
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+                }
+
+                Button {
+                    Task { await viewModel.login() }
+                } label: {
+                    Group {
+                        if viewModel.isLoading {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text("تسجيل الدخول").fontWeight(.semibold)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .foregroundColor(.white)
+                    .background(viewModel.isLoading ? Color.gray.opacity(0.4) : .brand)
+                    .cornerRadius(12)
+                }
+                .disabled(viewModel.isLoading || viewModel.phoneDigits.isEmpty || viewModel.password.isEmpty)
+                .padding(.horizontal, 24)
+
+                HStack(spacing: 4) {
+                    Button("إنشاء حساب") { onSignUpTapped() }
+                        .foregroundColor(.brand)
+                        .fontWeight(.semibold)
+                    Text("ليس لديك حساب؟")
+                        .foregroundColor(.secondary)
+                }
+                .font(.subheadline)
             }
-            .padding(.top, 16)
+            .padding(.bottom, 40)
         }
-        .padding(.top, 40)
-        .background(Color.white)
-        .ignoresSafeArea()
+        .background(Color.pageBackground.ignoresSafeArea())
         .alert("نجاح", isPresented: $viewModel.showSuccessAlert) {
-            Button("موافق") { }
+            Button("موافق") {}
         } message: {
             Text("تم تسجيل الدخول بنجاح!")
         }
+    }
+}
+
+// MARK: - Shared auth field
+struct AuthField: View {
+    let icon: String
+    let placeholder: String
+    @Binding var text: String
+    var keyboard: UIKeyboardType = .default
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(.secondary)
+                .frame(width: 20)
+            TextField(placeholder, text: $text)
+                .keyboardType(keyboard)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+        }
+        .padding(14)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
     }
 }
 
@@ -87,23 +112,26 @@ struct PasswordTextField: View {
     @Binding var value: String
     let placeholder: String
     @State private var isSecure = true
-    
+
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
             Image(systemName: "lock.fill")
-                .foregroundColor(.gray)
-            if isSecure {
-                SecureField(placeholder, text: $value)
-            } else {
-                TextField(placeholder, text: $value)
+                .foregroundColor(.secondary)
+                .frame(width: 20)
+            Group {
+                if isSecure {
+                    SecureField(placeholder, text: $value)
+                } else {
+                    TextField(placeholder, text: $value)
+                }
             }
-            Button(action: { isSecure.toggle() }) {
-                Image(systemName: isSecure ? "eye.slash.fill" : "eye.fill")
-                    .foregroundColor(.gray)
+            Button { isSecure.toggle() } label: {
+                Image(systemName: isSecure ? "eye.slash" : "eye")
+                    .foregroundColor(.secondary)
             }
         }
-        .padding()
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
+        .padding(14)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
     }
 }
