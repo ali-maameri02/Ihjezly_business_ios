@@ -156,36 +156,52 @@ struct MyPropertiesView: View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
-            if viewModel.isLoading {
-                ProgressView("جارٍ التحميل...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    VStack(spacing: 16) {
-
-                        // MARK: Subscription status banner
-                        subscriptionBanner
-
-                        // MARK: Properties list
-                        if viewModel.properties.isEmpty {
-                            VStack(spacing: 16) {
-                                Image(systemName: "building.2")
-                                    .font(.system(size: 60))
-                                    .foregroundColor(.gray)
-                                Text("لا توجد عقارات")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, 60)
-                        } else {
-                            ForEach(viewModel.properties) { property in
-                                PropertyCard(property: property, brand: brand)
-                                    .padding(.horizontal, 16)
+            VStack(spacing: 0) {
+                // MARK: Filter buttons
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(MyPropertiesViewModel.StatusFilter.allCases) { filter in
+                            FilterButton(
+                                filter: filter,
+                                isSelected: viewModel.selectedFilter == filter,
+                                count: viewModel.count(for: filter),
+                                brand: brand
+                            ) {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    viewModel.selectedFilter = filter
+                                }
                             }
                         }
                     }
-                    .padding(.vertical, 16)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                }
+                .background(Color.white)
+                .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
+
+                if viewModel.isLoading {
+                    Spacer()
+                    ProgressView("جارس التحميل...")
+                    Spacer()
+                } else {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            subscriptionBanner
+                                .padding(.top, 12)
+
+                            let filtered = viewModel.filteredProperties
+                            if filtered.isEmpty {
+                                emptyState
+                            } else {
+                                ForEach(filtered) { property in
+                                    PropertyCard(property: property, brand: brand)
+                                        .padding(.horizontal, 16)
+                                }
+                            }
+                        }
+                        .padding(.bottom, 24)
+                    }
+                    .refreshable { await viewModel.load() }
                 }
             }
 
@@ -194,7 +210,7 @@ struct MyPropertiesView: View {
                 Color.black.opacity(0.35).ignoresSafeArea()
                 VStack(spacing: 16) {
                     ProgressView().scaleEffect(1.4).tint(.white)
-                    Text("جارٍ معالجة الاشتراك...")
+                    Text("جارس معالجة الاشتراك...")
                         .foregroundColor(.white)
                         .font(.headline)
                 }
@@ -206,11 +222,9 @@ struct MyPropertiesView: View {
         .navigationTitle("عقاراتي")
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.load() }
-        // MARK: Plan picker sheet
         .sheet(isPresented: $viewModel.showPlansSheet) {
             PlansSheet(viewModel: viewModel, brand: brand)
         }
-        // MARK: Confirm dialog
         .confirmationDialog(
             viewModel.selectedPlan.map { "الاشتراك في \"\($0.name)\"" } ?? "تأكيد الاشتراك",
             isPresented: $viewModel.showConfirmDialog,
@@ -223,7 +237,6 @@ struct MyPropertiesView: View {
         } message: {
             Text("سيتم خصم المبلغ من رصيد محفظتك مباشرةً")
         }
-        // MARK: Error alert
         .alert("خطأ", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
             set: { if !$0 { viewModel.errorMessage = nil } }
@@ -232,7 +245,6 @@ struct MyPropertiesView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
-        // MARK: Success alert
         .alert("تم بنجاح ✓", isPresented: Binding(
             get: { viewModel.successMessage != nil },
             set: { if !$0 { viewModel.successMessage = nil } }
@@ -243,11 +255,27 @@ struct MyPropertiesView: View {
         }
     }
 
+    // MARK: Empty state
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "building.2")
+                .font(.system(size: 56))
+                .foregroundColor(.gray.opacity(0.4))
+            Text(viewModel.selectedFilter == .all
+                 ? "لا توجد عقارات"
+                 : "لا توجد عقارات \(viewModel.selectedFilter.label)")
+                .font(.headline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 60)
+    }
+
     // MARK: Subscription banner
     @ViewBuilder
     private var subscriptionBanner: some View {
         if let active = viewModel.activeSubscription {
-            // Active subscription summary
             VStack(spacing: 0) {
                 HStack {
                     Image(systemName: "checkmark.seal.fill")
@@ -271,16 +299,13 @@ struct MyPropertiesView: View {
 
                 HStack(spacing: 0) {
                     Label("\(active.usedAds) مستخدم", systemImage: "megaphone.fill")
-                        .font(.caption)
-                        .frame(maxWidth: .infinity)
+                        .font(.caption).frame(maxWidth: .infinity)
                     Divider().frame(height: 20)
                     Label("\(active.remainingAds) متبقي", systemImage: "star.fill")
-                        .font(.caption)
-                        .frame(maxWidth: .infinity)
+                        .font(.caption).frame(maxWidth: .infinity)
                     Divider().frame(height: 20)
                     Label("\(active.maxAds) إجمالي", systemImage: "list.number")
-                        .font(.caption)
-                        .frame(maxWidth: .infinity)
+                        .font(.caption).frame(maxWidth: .infinity)
                 }
                 .padding(.vertical, 8)
                 .background(Color.white)
@@ -289,28 +314,21 @@ struct MyPropertiesView: View {
             .shadow(color: .black.opacity(0.07), radius: 4, x: 0, y: 2)
             .padding(.horizontal, 16)
         } else {
-            // No subscription — prompt to subscribe
             HStack(spacing: 12) {
                 Image(systemName: "exclamationmark.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(.orange)
+                    .font(.title2).foregroundColor(.orange)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("لا يوجد اشتراك نشط")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
+                        .font(.subheadline).fontWeight(.semibold)
                     Text("اشترك لتفعيل ميزة الإعلانات على عقاراتك")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.caption).foregroundColor(.secondary)
                 }
                 Spacer()
                 Button("اشترك") { viewModel.showPlansSheet = true }
-                    .font(.subheadline)
-                    .fontWeight(.bold)
+                    .font(.subheadline).fontWeight(.bold)
                     .foregroundColor(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(brand)
-                    .cornerRadius(10)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(brand).cornerRadius(10)
             }
             .padding(14)
             .background(Color.orange.opacity(0.07))
@@ -321,55 +339,134 @@ struct MyPropertiesView: View {
     }
 }
 
+// MARK: - Filter button
+private struct FilterButton: View {
+    let filter: MyPropertiesViewModel.StatusFilter
+    let isSelected: Bool
+    let count: Int
+    let brand: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Text(filter.label)
+                    .font(.subheadline)
+                    .fontWeight(isSelected ? .bold : .regular)
+                if count > 0 {
+                    Text("\(count)")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(isSelected ? brand : .white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(isSelected ? brand.opacity(0.15) : Color.gray.opacity(0.4))
+                        .clipShape(Capsule())
+                }
+            }
+            .foregroundColor(isSelected ? brand : .secondary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(
+                isSelected
+                    ? brand.opacity(0.1)
+                    : Color(.systemGray6)
+            )
+            .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isSelected ? brand : Color.clear, lineWidth: 1.5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - Property card
 private struct PropertyCard: View {
     let property: MyProperty
     let brand: Color
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 10) {
-            HStack {
-                // Status badge
-                Text(property.statusLabel)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(property.statusColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(property.statusColor.opacity(0.12))
-                    .cornerRadius(6)
-                Spacer()
-                Text(property.title)
-                    .font(.headline)
-                    .multilineTextAlignment(.trailing)
-            }
+        VStack(alignment: .trailing, spacing: 0) {
 
-            HStack {
-                Text("\(property.price, specifier: "%.0f") \(property.currency == "LYD" ? "د.ل" : property.currency)")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(brand)
-                Spacer()
-                Label("\(property.location.city)، \(property.location.state)", systemImage: "mappin.circle.fill")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+            // Image
+            ZStack(alignment: .topLeading) {
+                if let urlStr = property.mainImageUrl, let url = URL(string: urlStr) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let img):
+                            img.resizable().scaledToFill()
+                        case .failure:
+                            imagePlaceholder
+                        default:
+                            Color.gray.opacity(0.15).overlay(ProgressView())
+                        }
+                    }
+                } else {
+                    imagePlaceholder
+                }
             }
+            .frame(height: 160)
+            .clipped()
+            .cornerRadius(12, corners: [.topLeft, .topRight])
 
-            if property.isAd {
-                Label("معلن", systemImage: "megaphone.fill")
-                    .font(.caption)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(brand)
-                    .cornerRadius(6)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+            // Info
+            VStack(alignment: .trailing, spacing: 8) {
+                HStack {
+                    // Status badge
+                    Text(property.statusLabel)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(property.statusColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(property.statusColor.opacity(0.12))
+                        .cornerRadius(6)
+                    Spacer()
+                    Text(property.title)
+                        .font(.headline)
+                        .multilineTextAlignment(.trailing)
+                        .lineLimit(1)
+                }
+
+                HStack {
+                    Text("\(property.price, specifier: "%.0f") \(property.currency == "LYD" ? "د.ل" : property.currency)")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(brand)
+                    Spacer()
+                    Label("\(property.location.city)، \(property.location.state)", systemImage: "mappin.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+
+                if property.isAd {
+                    Label("معلن", systemImage: "megaphone.fill")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(brand)
+                        .cornerRadius(6)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
             }
+            .padding(14)
+            .background(Color.white)
+            .cornerRadius(12, corners: [.bottomLeft, .bottomRight])
         }
-        .padding(14)
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
+        .shadow(color: .black.opacity(0.08), radius: 5, x: 0, y: 2)
+    }
+
+    private var imagePlaceholder: some View {
+        Color.gray.opacity(0.12)
+            .overlay(
+                Image(systemName: "photo")
+                    .font(.system(size: 36))
+                    .foregroundColor(.gray.opacity(0.4))
+            )
     }
 }
 
@@ -473,6 +570,7 @@ struct MyProperty: Identifiable {
     let isAd: Bool
     let status: String
     let location: MyPropertyLocation
+    let mainImageUrl: String?
 
     var statusLabel: String {
         switch status {
@@ -500,7 +598,37 @@ struct MyPropertyLocation: Codable {
 // MARK: - MyPropertiesViewModel
 @MainActor
 final class MyPropertiesViewModel: ObservableObject {
+
+    // MARK: Status filter
+    enum StatusFilter: String, CaseIterable, Identifiable {
+        case all      = "all"
+        case pending  = "Pending"
+        case accepted = "Accepted"
+        case refused  = "Refused"
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .all:      return "الكل"
+            case .pending:  return "طلبات المراجعة"
+            case .accepted: return "المقبولة"
+            case .refused:  return "المرفوضة"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .all:      return .primary
+            case .pending:  return .orange
+            case .accepted: return .green
+            case .refused:  return .red
+            }
+        }
+    }
+
     @Published var properties: [MyProperty] = []
+    @Published var selectedFilter: StatusFilter = .all
     @Published var plans: [SubscriptionPlan] = []
     @Published var activeSubscription: ActiveSubscription? = nil
     @Published var selectedPlan: SubscriptionPlan? = nil
@@ -510,6 +638,16 @@ final class MyPropertiesViewModel: ObservableObject {
     @Published var showConfirmDialog = false
     @Published var errorMessage: String? = nil
     @Published var successMessage: String? = nil
+
+    var filteredProperties: [MyProperty] {
+        guard selectedFilter != .all else { return properties }
+        return properties.filter { $0.status == selectedFilter.rawValue }
+    }
+
+    func count(for filter: StatusFilter) -> Int {
+        guard filter != .all else { return properties.count }
+        return properties.filter { $0.status == filter.rawValue }.count
+    }
 
     private let apiClient: APIClient
     private let subscriptionService: SubscriptionService
@@ -574,6 +712,7 @@ final class MyPropertiesViewModel: ObservableObject {
     }
 
     private func fetchProperties(ownerId: String) async -> [MyProperty] {
+        struct RawImage: Codable { let url: String; let isMain: Bool? }
         struct RawLocation: Codable { let city: String; let state: String }
         struct RawProperty: Codable {
             let id: String
@@ -583,27 +722,28 @@ final class MyPropertiesViewModel: ObservableObject {
             let isAd: Bool
             let status: String
             let location: RawLocation
-            enum CodingKeys: String, CodingKey {
-                case id = "id"
-                case title, price = "price", currency, isAd, status, location
-            }
+            let images: [RawImage]?
         }
         do {
             let raw: [RawProperty] = try await apiClient.get(
                 to: "/api/v1/AllProperties/by-owner/\(ownerId)"
             )
             return raw.map {
-                MyProperty(
+                let mainImage = $0.images?.first(where: { $0.isMain == true })?.url
+                    ?? $0.images?.first?.url
+                return MyProperty(
                     id: $0.id,
                     title: $0.title,
                     price: $0.price,
                     currency: $0.currency,
                     isAd: $0.isAd,
                     status: $0.status,
-                    location: MyPropertyLocation(city: $0.location.city, state: $0.location.state)
+                    location: MyPropertyLocation(city: $0.location.city, state: $0.location.state),
+                    mainImageUrl: mainImage
                 )
             }
         } catch {
+            print("❌ fetchProperties error: \(error)")
             return []
         }
     }

@@ -95,19 +95,23 @@ final class AddAdViewModel: ObservableObject {
 
     private func fetchProperties(ownerId: String) async -> [MyProperty] {
         struct RawLocation: Codable { let city: String; let state: String }
+        struct RawImage: Codable { let url: String; let isMain: Bool? }
         struct RawProperty: Codable {
             let id: String; let title: String; let price: Double
             let currency: String; let isAd: Bool; let status: String
-            let location: RawLocation
+            let location: RawLocation; let images: [RawImage]?
         }
         do {
             let raw: [RawProperty] = try await apiClient.get(
                 to: "/api/v1/AllProperties/by-owner/\(ownerId)"
             )
             return raw.map {
-                MyProperty(id: $0.id, title: $0.title, price: $0.price,
+                let mainImage = $0.images?.first(where: { $0.isMain == true })?.url
+                    ?? $0.images?.first?.url
+                return MyProperty(id: $0.id, title: $0.title, price: $0.price,
                            currency: $0.currency, isAd: $0.isAd, status: $0.status,
-                           location: MyPropertyLocation(city: $0.location.city, state: $0.location.state))
+                           location: MyPropertyLocation(city: $0.location.city, state: $0.location.state),
+                           mainImageUrl: mainImage)
             }
         } catch { return [] }
     }
