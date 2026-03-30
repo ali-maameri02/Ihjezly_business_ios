@@ -182,14 +182,16 @@ private struct BookingRow: View {
             Divider().padding(.horizontal, 14)
 
             // Footer: price always visible; pending also shows accept/reject
-            HStack(spacing: 0) {
+            HStack(spacing: 8) {
                 // Price — shown for all statuses
                 Text(booking.formattedPrice)
-                    .font(.title3).fontWeight(.bold)
+                    .font(.headline).fontWeight(.bold)
                     .foregroundColor(brand)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                     .padding(.leading, 14)
 
-                Spacer()
+                Spacer(minLength: 4)
 
                 if booking.bookingStatus == .pending {
                     // Accept / Reject actions
@@ -197,12 +199,12 @@ private struct BookingRow: View {
                         ProgressView()
                             .padding(.trailing, 14)
                     } else {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 6) {
                             Button(action: onReject) {
                                 Label("رفض", systemImage: "xmark")
                                     .font(.subheadline).fontWeight(.semibold)
                                     .foregroundColor(.red)
-                                    .padding(.horizontal, 14).padding(.vertical, 8)
+                                    .padding(.horizontal, 12).padding(.vertical, 8)
                                     .background(Color.red.opacity(0.08))
                                     .cornerRadius(8)
                             }
@@ -210,7 +212,7 @@ private struct BookingRow: View {
                                 Label("قبول", systemImage: "checkmark")
                                     .font(.subheadline).fontWeight(.semibold)
                                     .foregroundColor(.white)
-                                    .padding(.horizontal, 14).padding(.vertical, 8)
+                                    .padding(.horizontal, 12).padding(.vertical, 8)
                                     .background(Color.green)
                                     .cornerRadius(8)
                             }
@@ -256,7 +258,11 @@ private struct InfoCell: View {
     var body: some View {
         VStack(spacing: 3) {
             Image(systemName: icon).font(.caption).foregroundColor(.secondary)
-            Text(value).font(.caption).fontWeight(.semibold)
+            Text(value)
+                .font(.caption).fontWeight(.semibold)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.75)
             Text(label).font(.caption2).foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)

@@ -33,16 +33,24 @@ struct Booking: Identifiable, Codable {
     }
 
     private func parseDate(_ raw: String) -> Date? {
-        let f1 = ISO8601DateFormatter(); f1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let f2 = ISO8601DateFormatter(); f2.formatOptions = [.withInternetDateTime]
+        // Backend returns no timezone suffix e.g. "2026-05-01T00:00:00" and
+        // "2026-02-22T01:18:43.2375761" — ISO8601DateFormatter requires a
+        // timezone so it always returns nil for these. Use DateFormatter instead.
+        let posix = Locale(identifier: "en_US_POSIX")
+        let f1 = DateFormatter()
+        f1.locale = posix
+        f1.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS" // reservedAt has 7-digit fractional seconds
+        let f2 = DateFormatter()
+        f2.locale = posix
+        f2.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"         // startDate / endDate have no fractional seconds
         return f1.date(from: raw) ?? f2.date(from: raw)
     }
 
     private func formatDate(_ raw: String) -> String {
         guard let date = parseDate(raw) else { return raw }
         let f = DateFormatter()
-        f.dateStyle = .medium
         f.locale = Locale(identifier: "ar")
+        f.dateFormat = "d MMMM yyyy"
         return f.string(from: date)
     }
 }

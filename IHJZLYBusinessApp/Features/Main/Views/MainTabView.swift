@@ -18,5 +18,6 @@ struct MainTabView: View {
                 .tabItem { Label("الحساب", systemImage: "person.crop.circle") }
         }
         .tint(.brand)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 }
