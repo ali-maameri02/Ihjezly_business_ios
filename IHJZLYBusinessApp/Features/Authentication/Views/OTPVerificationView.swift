@@ -1,99 +1,108 @@
 // Features/Authentication/Views/OTPVerificationView.swift
-
 import SwiftUI
 
-/// Step 2 of registration: OTP verification.
-/// Receives the full international phone from Step 1,
-/// auto-sends OTP on appear, navigates to Step 3 on success.
-struct OTPVerificationView: View {
+struct OTPVerificationView<Destination: View>: View {
 
     let phone: String
+    @ViewBuilder let destination: () -> Destination
 
     @StateObject private var viewModel: OTPViewModel
     @FocusState  private var otpFocused: Bool
 
-    init(phone: String) {
+    init(phone: String, @ViewBuilder destination: @escaping () -> Destination) {
         self.phone = phone
+        self.destination = destination
         _viewModel = StateObject(wrappedValue: OTPViewModel(phone: phone))
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                header
+                    .padding(.top, 40)
+                    .padding(.bottom, 32)
 
-                // ── Header ────────────────────────────────────────────────
-                VStack(spacing: 8) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.brand.opacity(0.1))
-                            .frame(width: 80, height: 80)
-                        Image(systemName: headerIcon)
-                            .font(.system(size: 34))
-                            .foregroundColor(.brand)
-                            .id(viewModel.step)
+                VStack(spacing: 20) {
+                    phoneChip
+
+                    switch viewModel.step {
+                    case .sending:
+                        sendingIndicator
+                    case .enterCode:
+                        otpInputField
+                        verifyButton
+                        resendButton
+                    case .verified:
+                        successSection
                     }
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.step)
 
-                    Text(headerTitle)
-                        .font(.title2).fontWeight(.bold)
-                        .foregroundColor(.primary)
-
-                    Text(headerSubtitle)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
+                    if let error = viewModel.errorMessage {
+                        ErrorBanner(message: error)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
                 }
-                .padding(.top, 40)
+                .padding(24)
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .shadow(color: .black.opacity(0.07), radius: 12, y: 4)
+                .padding(.horizontal, 20)
+                .animation(.easeInOut(duration: 0.25), value: viewModel.step)
+                .animation(.easeInOut(duration: 0.2), value: viewModel.errorMessage)
 
-                // ── Phone chip ────────────────────────────────────────────
-                HStack(spacing: 8) {
-                    Image(systemName: "phone.fill")
-                        .foregroundColor(.brand)
-                        .font(.subheadline)
-                    Text(phone)
-                        .font(.subheadline).fontWeight(.medium)
-                    Spacer()
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
-                .background(Color.brand.opacity(0.08))
-                .cornerRadius(12)
-                .padding(.horizontal, 24)
-
-                // ── Content by step ───────────────────────────────────────
-                switch viewModel.step {
-                case .sending:
-                    sendingIndicator
-                case .enterCode:
-                    otpSection
-                case .verified:
-                    successSection
-                }
-
-                // ── Error banner ──────────────────────────────────────────
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
+                Spacer(minLength: 32)
             }
-            .padding(.bottom, 40)
         }
-        .background(Color.pageBackground.ignoresSafeArea())
-        .animation(.easeInOut(duration: 0.25), value: viewModel.step)
-        .animation(.easeInOut(duration: 0.2), value: viewModel.errorMessage)
+        .background(Color(.secondarySystemBackground).ignoresSafeArea())
+        .navigationTitle("التحقق من الهاتف")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear { viewModel.sendOTP() }
-        // Navigate to Step 3 when OTP is verified
         .navigationDestination(isPresented: Binding(
             get: { viewModel.step == .verified },
             set: { _ in }
         )) {
-            CompleteProfileView(phone: phone)
+            destination()
         }
+    }
+
+    // MARK: - Header
+    private var header: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.brand.opacity(0.1))
+                    .frame(width: 88, height: 88)
+                Image(systemName: headerIcon)
+                    .font(.system(size: 38))
+                    .foregroundStyle(Color.brand)
+                    .id(viewModel.step)
+            }
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.step)
+
+            Text(headerTitle)
+                .font(.title3).fontWeight(.bold)
+
+            Text(headerSubtitle)
+                .font(.subheadline)
+                .foregroundStyle(Color.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+        }
+    }
+
+    // MARK: - Phone chip
+    private var phoneChip: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "phone.fill")
+                .foregroundStyle(Color.brand)
+                .font(.subheadline)
+            Text(phone)
+                .font(.subheadline).fontWeight(.medium)
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.brand.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: - Sending indicator
@@ -102,46 +111,14 @@ struct OTPVerificationView: View {
             ProgressView()
             Text("جارٍ إرسال رمز التحقق...")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(Color.secondary)
         }
         .padding(.vertical, 8)
     }
 
-    // MARK: - OTP entry section
-    private var otpSection: some View {
-        VStack(spacing: 20) {
-            // 6-box digit display
-            otpInputField
-
-            // Verify button
-            Button(action: viewModel.verifyOTP) {
-                Group {
-                    if viewModel.isVerifying {
-                        ProgressView().tint(.white)
-                    } else {
-                        Text("تأكيد").fontWeight(.semibold)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .foregroundColor(.white)
-                .background(
-                    viewModel.otpCode.count == 6 && !viewModel.isVerifying
-                        ? Color.brand : Color.gray.opacity(0.4)
-                )
-                .cornerRadius(12)
-            }
-            .disabled(viewModel.otpCode.count != 6 || viewModel.isVerifying)
-            .padding(.horizontal, 24)
-
-            // Resend button with countdown
-            resendButton
-        }
-    }
-
     // MARK: - 6-box OTP input
     private var otpInputField: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             HStack(spacing: 10) {
                 ForEach(0..<6, id: \.self) { index in
                     OTPDigitBox(
@@ -150,7 +127,6 @@ struct OTPVerificationView: View {
                     )
                 }
             }
-            // Invisible TextField captures keyboard input
             .overlay(
                 TextField("", text: $viewModel.otpCode)
                     .keyboardType(.numberPad)
@@ -168,9 +144,19 @@ struct OTPVerificationView: View {
 
             Text("أدخل الرمز المكون من 6 أرقام")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(Color.secondary)
         }
-        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Verify button
+    private var verifyButton: some View {
+        AuthButton(
+            title: "تأكيد",
+            isLoading: viewModel.isVerifying,
+            isEnabled: viewModel.otpCode.count == 6 && !viewModel.isVerifying
+        ) {
+            viewModel.verifyOTP()
+        }
     }
 
     // MARK: - Resend button
@@ -180,10 +166,10 @@ struct OTPVerificationView: View {
                 HStack(spacing: 4) {
                     Text("إعادة الإرسال بعد")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(Color.secondary)
                     Text("\(viewModel.resendCountdown)s")
                         .font(.subheadline).fontWeight(.bold)
-                        .foregroundColor(.brand)
+                        .foregroundStyle(Color.brand)
                         .monospacedDigit()
                         .contentTransition(.numericText())
                 }
@@ -195,10 +181,10 @@ struct OTPVerificationView: View {
                         } else {
                             Image(systemName: "arrow.clockwise").font(.subheadline)
                         }
-                        Text("إعادة إرسال الكود")
+                        Text("إعادة إرسال الرمز")
                             .font(.subheadline).fontWeight(.semibold)
                     }
-                    .foregroundColor(.brand)
+                    .foregroundStyle(Color.brand)
                 }
                 .disabled(viewModel.isSending)
             }
@@ -208,17 +194,17 @@ struct OTPVerificationView: View {
 
     // MARK: - Success flash
     private var successSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 52))
-                .foregroundColor(.green)
+                .font(.system(size: 56))
+                .foregroundStyle(Color.green)
             Text("تم التحقق بنجاح ✓")
                 .font(.headline)
-                .foregroundColor(.green)
+                .foregroundStyle(Color.green)
             Text("جارٍ الانتقال...")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
-            ProgressView().tint(.brand)
+                .foregroundStyle(Color.secondary)
+            ProgressView().tint(Color.brand)
         }
         .padding(.vertical, 8)
     }
@@ -237,7 +223,7 @@ struct OTPVerificationView: View {
     private var headerTitle: String {
         switch viewModel.step {
         case .sending:   return "جارٍ الإرسال..."
-        case .enterCode: return "أدخل كود التحقق"
+        case .enterCode: return "أدخل رمز التحقق"
         case .verified:  return "تم التحقق!"
         }
     }
@@ -245,7 +231,7 @@ struct OTPVerificationView: View {
     private var headerSubtitle: String {
         switch viewModel.step {
         case .sending:   return "يتم إرسال رمز التحقق إلى \(phone)"
-        case .enterCode: return "أرسلنا كودًا مكونًا من 6 أرقام إلى\n\(phone)"
+        case .enterCode: return "تم إرسال رمز مكون من 6 أرقام إلى\n\(phone)"
         case .verified:  return "رقم هاتفك مؤكد"
         }
     }
@@ -259,21 +245,20 @@ private struct OTPDigitBox: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.systemGray6))
+                .fill(Color(.secondarySystemBackground))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(
                             isFocused
                                 ? Color.brand
                                 : digit.isEmpty
-                                    ? Color.gray.opacity(0.3)
+                                    ? Color.secondary.opacity(0.2)
                                     : Color.brand.opacity(0.5),
                             lineWidth: isFocused ? 2 : 1
                         )
                 )
             Text(digit)
                 .font(.title2).fontWeight(.bold)
-                .foregroundColor(.primary)
         }
         .frame(width: 46, height: 54)
         .animation(.easeInOut(duration: 0.15), value: isFocused)

@@ -5,11 +5,10 @@ import Combine
 
 struct LoginView: View {
     @StateObject private var viewModel: LoginViewModel
-    let onSignUpTapped: () -> Void
+    @State private var showSignUp = false
 
-    init(appState: AppState, onSignUpTapped: @escaping () -> Void) {
+    init(appState: AppState) {
         _viewModel = StateObject(wrappedValue: LoginViewModel(appState: appState))
-        self.onSignUpTapped = onSignUpTapped
     }
 
     var body: some View {
@@ -65,14 +64,31 @@ struct LoginView: View {
                 .disabled(viewModel.isLoading || viewModel.phoneDigits.isEmpty || viewModel.password.isEmpty)
                 .padding(.horizontal, 24)
 
-                HStack(spacing: 4) {
-                    Button("إنشاء حساب") { onSignUpTapped() }
-                        .foregroundColor(.brand)
-                        .fontWeight(.semibold)
-                    Text("ليس لديك حساب؟")
-                        .foregroundColor(.secondary)
+                // ── Divider ───────────────────────────────────────────────
+                HStack(spacing: 12) {
+                    Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
+                    Text("أو").font(.caption).foregroundColor(.secondary)
+                    Rectangle().fill(Color.secondary.opacity(0.3)).frame(height: 1)
                 }
-                .font(.subheadline)
+                .padding(.horizontal, 24)
+
+                // ── Register button ───────────────────────────────────────
+                NavigationLink(destination: SignUpView()) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.badge.plus")
+                        Text("إنشاء حساب جديد").fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .foregroundColor(.brand)
+                    .background(Color.brand.opacity(0.1))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.brand.opacity(0.4), lineWidth: 1.5)
+                    )
+                }
+                .padding(.horizontal, 24)
             }
             .padding(.bottom, 40)
         }

@@ -4,12 +4,8 @@ import Combine
 
 struct ProfileView: View {
     @StateObject private var viewModel = UserProfileViewModel()
-    @State private var showSettings = false
-    @State private var showNotifications = false
-    @State private var showMyProperties = false
-    @State private var showAccountInfo = false
+    @EnvironmentObject private var appState: AppState
     @State private var showLogoutAlert = false
-    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         NavigationStack {
@@ -75,9 +71,7 @@ struct ProfileView: View {
     }
     
     func logout() {
-        UserDefaults.standard.removeObject(forKey: "auth_token")
-        UserDefaults.standard.synchronize()
-        exit(0)
+        appState.logout()
     }
 }
 
@@ -935,7 +929,7 @@ struct SettingsView: View {
             Section("الإعدادات العامة") {
                 Toggle("الإشعارات", isOn: $notificationsEnabled)
                 Toggle("الوضع الليلي", isOn: $darkModeEnabled)
-                    .onChange(of: darkModeEnabled) { newValue in
+                    .onChange(of: darkModeEnabled) { _, newValue in
                         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
                             windowScene.windows.first?.overrideUserInterfaceStyle = newValue ? .dark : .light
                         }

@@ -5,7 +5,7 @@ struct PhoneVerificationRequest: Codable {
 struct RegisterRequest: Codable {
     let fullName: String
     let phoneNumber: String
-    let email: String
+    let email: String?   // optional — backend accepts nil
     let password: String
     let role: UserRole
 }

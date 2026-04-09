@@ -13,6 +13,9 @@ final class UserProfileViewModel: ObservableObject {
     
     init() {
         let client = APIClient(baseURLString: "http://31.220.56.155:5050")
+        if let token = UserDefaults.standard.string(forKey: "auth_token") {
+            client.defaultHeaders["Authorization"] = "Bearer \(token)"
+        }
         let repo = AuthRepository(apiClient: client)
         self.getCurrentUserUseCase = GetCurrentUserUseCase(authRepo: repo)
         Task { await loadUser() }

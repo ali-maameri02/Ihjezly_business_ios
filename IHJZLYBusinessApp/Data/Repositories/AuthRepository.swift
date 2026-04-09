@@ -18,7 +18,8 @@ final class AuthRepository: AuthRepositoryProtocol {
         ) as EmptyResponse
     }
     
-    func register(fullName: String, phoneNumber: String, email: String, password: String, role: UserRole) async throws -> String {
+    // Register returns UserDto — no token. Caller handles success/failure.
+    func register(fullName: String, phoneNumber: String, email: String, password: String, role: UserRole) async throws -> RegisterResponse {
         let normalizedPhone = normalizePhoneNumber(phoneNumber)
         let request = RegisterRequest(
             fullName: fullName,
@@ -27,11 +28,10 @@ final class AuthRepository: AuthRepositoryProtocol {
             password: password,
             role: role
         )
-        let response: AuthResponse = try await apiClient.post(
+        return try await apiClient.post(
             to: "/api/v1/Users/register",
             body: request
         )
-        return response.accessToken
     }
     
     func login(emailOrPhone: String, password: String) async throws -> String {

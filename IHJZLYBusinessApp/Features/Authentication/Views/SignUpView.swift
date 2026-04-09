@@ -1,95 +1,87 @@
 // Features/Authentication/Views/SignUpView.swift
-
 import SwiftUI
 import Combine
 
-/// Step 1 of registration: collect phone number and send OTP.
 struct SignUpView: View {
 
     @StateObject private var viewModel = SignUpViewModel()
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
 
-                // ── Hero ─────────────────────────────────────────────────
-                VStack(spacing: 10) {
-                    Image("ihjzlyapplogo")
-                        .resizable()
-                        .frame(width: 80, height: 80)
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
-                        .shadow(color: .brand.opacity(0.3), radius: 10, x: 0, y: 4)
+                // ── Hero ──────────────────────────────────────────────────
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.brand.opacity(0.1))
+                            .frame(width: 90, height: 90)
+                        Image(systemName: "person.badge.plus.fill")
+                            .font(.system(size: 40))
+                            .foregroundStyle(Color.brand)
+                    }
+                    .padding(.top, 36)
 
                     Text("إنشاء حساب تجاري")
                         .font(.title2).fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(Color.primary)
 
                     Text("أدخل رقم هاتفك لبدء التسجيل")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(Color.secondary)
                 }
-                .padding(.top, 48)
+                .padding(.bottom, 32)
 
-                // ── Phone input ───────────────────────────────────────────
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        // Country code badge
-                        Text("+218")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 14)
-                            .background(Color(.systemGray5))
-                            .cornerRadius(12)
+                // ── Form card ─────────────────────────────────────────────
+                VStack(spacing: 20) {
 
-                        TextField("912345678", text: $viewModel.phoneNumber)
-                            .keyboardType(.phonePad)
-                            .textInputAutocapitalization(.never)
-                            .padding(14)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
-                            .onReceive(Just(viewModel.phoneNumber)) { newValue in
-                                let filtered = newValue.filter { $0.isNumber }
-                                viewModel.phoneNumber = String(filtered.prefix(9))
-                            }
-                    }
+                    AuthInputField(
+                        placeholder: "رقم الهاتف (مثال: 218910024433)",
+                        text: $viewModel.phoneNumber,
+                        icon: "phone.fill",
+                        keyboardType: .phonePad,
+                        error: viewModel.phoneError
+                    )
 
                     if let error = viewModel.errorMessage {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .font(.caption)
-                            .padding(.horizontal, 4)
+                        ErrorBanner(message: error)
                     }
-                }
-                .padding(.horizontal, 24)
 
-                // ── Send OTP button ───────────────────────────────────────
-                Button(action: viewModel.sendOTPAndProceed) {
-                    Group {
-                        if viewModel.isLoading {
-                            ProgressView().tint(.white)
-                        } else {
-                            Text("إرسال كود التحقق").fontWeight(.semibold)
+                    AuthButton(
+                        title: "التالي",
+                        isLoading: viewModel.isLoading,
+                        isEnabled: !viewModel.phoneNumber.trimmingCharacters(in: .whitespaces).isEmpty
+                    ) {
+                        viewModel.sendOTPAndProceed()
+                    }
+
+                    Button(action: { dismiss() }) {
+                        HStack(spacing: 4) {
+                            Text("لديك حساب بالفعل؟")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.secondary)
+                            Text("تسجيل الدخول")
+                                .font(.subheadline).fontWeight(.semibold)
+                                .foregroundStyle(Color.brand)
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .foregroundColor(.white)
-                    .background(
-                        viewModel.isLoading || viewModel.phoneNumber.count != 9
-                            ? Color.gray.opacity(0.4) : .brand
-                    )
-                    .cornerRadius(12)
                 }
-                .disabled(viewModel.isLoading || viewModel.phoneNumber.count != 9)
-                .padding(.horizontal, 24)
+                .padding(24)
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .shadow(color: .black.opacity(0.07), radius: 12, y: 4)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 32)
             }
-            .padding(.bottom, 40)
         }
-        .background(Color.pageBackground.ignoresSafeArea())
-        // Navigate to OTP screen once OTP has been sent
+        .background(Color(.secondarySystemBackground).ignoresSafeArea())
+        .navigationTitle("إنشاء حساب")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $viewModel.navigateToOTP) {
-            OTPVerificationView(phone: viewModel.normalizedPhone)
+            OTPVerificationView(phone: viewModel.phoneNumber) {
+                CompleteProfileView(phone: viewModel.phoneNumber)
+            }
         }
     }
 }

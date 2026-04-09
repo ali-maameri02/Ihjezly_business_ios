@@ -4,7 +4,8 @@ import Foundation
 import Combine
 
 /// Step 3 ViewModel: collects profile info and creates the account via the backend.
-/// Role is always BusinessOwner for this app.
+/// On success, sets isRegistered = true to navigate to the success screen.
+/// Does NOT set auth token or navigate to home — user must log in manually.
 @MainActor
 final class CompleteProfileViewModel: ObservableObject {
 
@@ -17,16 +18,22 @@ final class CompleteProfileViewModel: ObservableObject {
     @Published var password = ""
     @Published var confirmPassword = ""
 
-    // MARK: - Field errors
+    // MARK: - Field-level validation errors
     @Published var fullNameError: String?
     @Published var emailError: String?
     @Published var passwordError: String?
     @Published var confirmPasswordError: String?
 
-    // MARK: - State
+    // MARK: - Screen state
     @Published var isLoading = false
     @Published var errorMessage: String?
+
+    /// True after backend confirms account creation — triggers navigation to RegistrationSuccessView.
+    /// Does NOT trigger auto-login.
     @Published var isRegistered = false
+
+    /// The name returned by the backend, shown on the success screen.
+    @Published var registeredName = ""
 
     private let registerUseCase: RegisterUseCase
 
@@ -78,31 +85,34 @@ final class CompleteProfileViewModel: ObservableObject {
         return valid
     }
 
-    // MARK: - Create account (POST /api/v1/Users/register)
+    // MARK: - Create account  POST /api/v1/Users/register
+    // Backend returns UserDto on success — no token is issued at registration.
+    // User must log in separately after account creation.
     func createAccount() {
         guard validate() else { return }
         isLoading = true
         errorMessage = nil
 
         Task {
+            defer { isLoading = false }
             do {
                 let mail = email.trimmingCharacters(in: .whitespaces)
-                // Role is always BusinessOwner in this app
-                let token = try await registerUseCase.execute(
+                let response = try await registerUseCase.execute(
                     fullName: fullName.trimmingCharacters(in: .whitespaces),
                     phoneNumber: phone,
-                    email: mail.isEmpty ? "user@ihjzly.ly" : mail,
+                    email: mail.isEmpty ? "" : mail,
                     password: password,
                     role: .businessOwner
                 )
-                UserDefaults.standard.set(token, forKey: "auth_token")
+                // Store the returned name for the success screen
+                registeredName = response.fullName
+                // Signal navigation to success screen — no token stored, no auto-login
                 isRegistered = true
             } catch let APIError.badRequest(msg) {
                 errorMessage = msg
             } catch {
                 errorMessage = "فشل التسجيل. تحقق من البيانات أو حاول لاحقًا."
             }
-            isLoading = false
         }
     }
 }
