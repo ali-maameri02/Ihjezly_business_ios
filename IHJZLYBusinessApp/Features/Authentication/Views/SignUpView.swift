@@ -3,55 +3,68 @@
 import SwiftUI
 import Combine
 
+/// Step 1 of registration: collect phone number and send OTP.
 struct SignUpView: View {
+
     @StateObject private var viewModel = SignUpViewModel()
-    let onOTPSent: (String) -> Void
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                Text("إنشاء حساب")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                    .padding(.top, 48)
 
-                HStack(spacing: 8) {
-                    Text("+218")
-                        .font(.headline)
+                // ── Hero ─────────────────────────────────────────────────
+                VStack(spacing: 10) {
+                    Image("ihjzlyapplogo")
+                        .resizable()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .shadow(color: .brand.opacity(0.3), radius: 10, x: 0, y: 4)
+
+                    Text("إنشاء حساب تجاري")
+                        .font(.title2).fontWeight(.bold)
+                        .foregroundColor(.primary)
+
+                    Text("أدخل رقم هاتفك لبدء التسجيل")
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 14)
-                        .background(Color(.systemGray5))
-                        .cornerRadius(12)
+                }
+                .padding(.top, 48)
 
-                    TextField("912345678", text: $viewModel.phoneNumber)
-                        .keyboardType(.phonePad)
-                        .textInputAutocapitalization(.never)
-                        .padding(14)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(12)
-                        .onReceive(Just(viewModel.phoneNumber)) { newValue in
-                            let filtered = newValue.filter { $0.isNumber }
-                            viewModel.phoneNumber = String(filtered.prefix(9))
-                        }
+                // ── Phone input ───────────────────────────────────────────
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        // Country code badge
+                        Text("+218")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 14)
+                            .background(Color(.systemGray5))
+                            .cornerRadius(12)
+
+                        TextField("912345678", text: $viewModel.phoneNumber)
+                            .keyboardType(.phonePad)
+                            .textInputAutocapitalization(.never)
+                            .padding(14)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            .onReceive(Just(viewModel.phoneNumber)) { newValue in
+                                let filtered = newValue.filter { $0.isNumber }
+                                viewModel.phoneNumber = String(filtered.prefix(9))
+                            }
+                    }
+
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                            .padding(.horizontal, 4)
+                    }
                 }
                 .padding(.horizontal, 24)
 
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-                }
-
-                Button {
-                    Task {
-                        await viewModel.sendOTP()
-                        if viewModel.isSuccess { onOTPSent(viewModel.phoneNumber) }
-                    }
-                } label: {
+                // ── Send OTP button ───────────────────────────────────────
+                Button(action: viewModel.sendOTPAndProceed) {
                     Group {
                         if viewModel.isLoading {
                             ProgressView().tint(.white)
@@ -62,7 +75,10 @@ struct SignUpView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .foregroundColor(.white)
-                    .background(viewModel.isLoading ? Color.gray.opacity(0.4) : .brand)
+                    .background(
+                        viewModel.isLoading || viewModel.phoneNumber.count != 9
+                            ? Color.gray.opacity(0.4) : .brand
+                    )
                     .cornerRadius(12)
                 }
                 .disabled(viewModel.isLoading || viewModel.phoneNumber.count != 9)
@@ -71,5 +87,9 @@ struct SignUpView: View {
             .padding(.bottom, 40)
         }
         .background(Color.pageBackground.ignoresSafeArea())
+        // Navigate to OTP screen once OTP has been sent
+        .navigationDestination(isPresented: $viewModel.navigateToOTP) {
+            OTPVerificationView(phone: viewModel.normalizedPhone)
+        }
     }
 }
