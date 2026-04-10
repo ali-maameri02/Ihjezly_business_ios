@@ -1,4 +1,4 @@
-// Features/PropertyCreation/ViewModels/Step2ViewModel.swift
+// Features/PropertyCreation/ViewModels/Step2ViewModel.swift t
 import Foundation
 import Combine
 import MapKit
