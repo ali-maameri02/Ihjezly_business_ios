@@ -37,7 +37,7 @@ final class Step2ViewModel<FormData: PropertyForm>: ObservableObject {
         return location
     }
 }
-
+//x
 struct IdentifiablePin: Identifiable {
     let id = UUID()
     let coordinate: CLLocationCoordinate2D
